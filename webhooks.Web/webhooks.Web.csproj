@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\webhooks.ApiService\webhooks.ApiService.csproj" />
     <ProjectReference Include="..\webhooks.ServiceDefaults\webhooks.ServiceDefaults.csproj" />
   </ItemGroup>
 

@@ -1,0 +1,89 @@
+﻿@page "/webhooks"
+@attribute [StreamRendering(true)]
+@attribute [OutputCache(Duration = 5)]
+
+@using webhooks.ApiService.src.models
+@inject WebhookApiClient WebhookApi
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Weather</PageTitle>
+
+<h3>Webhooks</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Url</th>
+            <th>Created At</th>
+            <th>Created By</th>
+            <th>Owner</th>
+            <th>Project</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var webhook in webhooks)
+        {
+                <tr>
+                    <td @onclick="() => OnWebhookClick(webhook)">@webhook.Name</td>
+                    <td>@webhook.Slug</td>
+                    <td>@webhook.Url</td>
+                    <td>@webhook.CreatedAt</td>
+                    <td>@webhook.CreatedBy</td>
+                    <td>@webhook.Owner</td>
+                    <td>@webhook.Project</td>
+                    <td>@webhook.Status</td>
+                </tr>
+        }
+    </tbody>
+</table>
+@if (selectedWebhook != null)
+{
+    <h3>Webhook Events for @selectedWebhook.Name</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Payload</th>
+                <th>Status</th>
+                <th>SubStatus</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var webhookEvent in webhookEvents)
+            {
+                <tr>
+                    <td>@webhookEvent.Id</td>
+                    <td>@webhookEvent.Payload</td>
+                    <td>@webhookEvent.Status</td>
+                    <td>@webhookEvent.SubStatus</td>
+                    <td>@webhookEvent.CreatedAt</td>
+                    <td>@webhookEvent.UpdatedAt</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+    private List<Webhook> webhooks = new List<Webhook>();
+    private Webhook? selectedWebhook;
+    private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var webhooksArray = await WebhookApi.GetWebhooksAsync();
+        webhooks = webhooksArray.ToList();
+    }
+
+    private async Task OnWebhookClick(Webhook webhook)
+    {
+        selectedWebhook = webhook;
+        var webhookEventsArray = await WebhookApi.GetWebhookEventsForWebhookAsync(webhook.Id.ToString());
+        webhookEvents = webhookEventsArray.ToList();
+        StateHasChanged(); // Ensure the component re-renders
+    }
+}

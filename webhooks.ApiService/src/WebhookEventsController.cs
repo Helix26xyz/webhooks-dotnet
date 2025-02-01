@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 
 namespace webhooks.ApiService.src
 {
+    // triggering a webhook
     [Route("api/webhook")]
     [ApiController]
-    public class WebhookEventsController : ControllerBase
+    public class WebhookEventsSubmissionController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public WebhookEventsController(AppDbContext context)
+        public WebhookEventsSubmissionController(AppDbContext context)
         {
             _context = context;
         }
@@ -65,19 +66,55 @@ namespace webhooks.ApiService.src
 
             return CreatedAtAction(nameof(GetWebhookEvent), new { id = webhookEvent.Id }, webhookEvent);
         }
-
-        //// GET: api/webhookevents/:id
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<WebhookEvent>> GetWebhookEvent(Guid id)
-        //{
-        //    var webhookEvent = await _context.WebhookEvents.FindAsync(id);
-
-        //    if (webhookEvent == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(webhookEvent);
-        //}
     }
+
+    // CRUD on a specific WebhookEvent
+    [Route("api/webhookevents")]
+    [ApiController]
+    public class WebhookEventsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public WebhookEventsController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/webhookevents
+        [HttpGet()]
+        public async Task<ActionResult<IEnumerable<WebhookEvent>>> GetWebhookEvents(Guid id)
+        {
+            var webhookevents = await _context.WebhookEvents.ToListAsync();
+            return webhookevents;
+        }
+
+        // GET: api/webhookevents/:id
+        [HttpGet("{id}")]
+        public async Task<ActionResult<WebhookEvent>> GetWebhookEvent(Guid id)
+        {
+            var webhookevent = await _context.WebhookEvents.FirstOrDefaultAsync(w => w.Id == id);
+            if (webhookevent == null)
+            {
+                return NotFound();
+            }
+            return webhookevent;
+        }
+        // GET: api/webhookevents/bywebhook/{webhookId}
+        [HttpGet("bywebhook/{webhookId}")]
+        public async Task<ActionResult<IEnumerable<WebhookEvent>>> GetWebhookEventsByWebhookId(Guid webhookId)
+        {
+            var webhookEvents = await _context.WebhookEvents
+                .Where(we => we.WebhookId == webhookId)
+                .ToListAsync();
+
+            if (webhookEvents == null || !webhookEvents.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(webhookEvents);
+        }
+
+    }
+
 }

@@ -22,13 +22,12 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public string Payload { get; set; } = string.Empty;
-
-        // Navigation property
         public required Webhook Webhook { get; set; }
         public WebhookEventStatus Status { get; set; }
         public WebhookEventSubStatus SubStatus { get; set; }
 
     }
+
 
 
     public enum WebhookStatus
