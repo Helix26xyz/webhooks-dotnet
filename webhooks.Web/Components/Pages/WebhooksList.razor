@@ -10,6 +10,11 @@
 
 <h3>Webhooks</h3>
 
+@if (webhooks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else{
 <table class="table">
     <thead>
         <tr>
@@ -27,7 +32,7 @@
         @foreach (var webhook in webhooks)
         {
                 <tr>
-                    <td @onclick="() => OnWebhookClick(webhook)">@webhook.Name</td>
+                    <td></td>
                     <td>@webhook.Slug</td>
                     <td>@webhook.Url</td>
                     <td>@webhook.CreatedAt</td>
@@ -39,39 +44,12 @@
         }
     </tbody>
 </table>
-@if (selectedWebhook != null)
-{
-    <h3>Webhook Events for @selectedWebhook.Name</h3>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Payload</th>
-                <th>Status</th>
-                <th>SubStatus</th>
-                <th>Created At</th>
-                <th>Updated At</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var webhookEvent in webhookEvents)
-            {
-                <tr>
-                    <td>@webhookEvent.Id</td>
-                    <td>@webhookEvent.Payload</td>
-                    <td>@webhookEvent.Status</td>
-                    <td>@webhookEvent.SubStatus</td>
-                    <td>@webhookEvent.CreatedAt</td>
-                    <td>@webhookEvent.UpdatedAt</td>
-                </tr>
-            }
-        </tbody>
-    </table>
 }
 @code {
     private List<Webhook> webhooks = new List<Webhook>();
     private Webhook? selectedWebhook;
     private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
+    private Webhook newWebhook = new Webhook();
 
     protected override async Task OnInitializedAsync()
     {
