@@ -12,9 +12,9 @@
 <h3>Webhooks</h3>
 
 <button class="btn btn-secondary" @onclick="RefreshWebhooks">Refresh</button>
-<button class="btn btn-primary" @onclick="ToggleFormVisibility">Add New Webhook</button>
+<button class="btn btn-primary" @onclick="ToggleNewWebhookFormVisibility">Add New Webhook</button>
 
-@if (isFormVisible)
+@if (isNewWebhookFormVisible)
 {
     <h4>Add New Webhook</h4>
     <EditForm Model="newWebhook" OnValidSubmit="AddWebhook">
@@ -90,7 +90,7 @@ else
                     <td>
                         <InputSelect placeholder="webhook"
                         @bind-Value="webhook.Status"
-                                     @bind-Value:after="() => OnStatusChange(webhook, __value)">
+                                     @bind-Value:after="() => OnWebhookStatusChange(webhook, __value)">
                         @foreach (var status in Enum.GetValues<WebhookStatus>())
                             {
                                 <option value="@status">@status</option>
@@ -150,7 +150,7 @@ else
     private Webhook? selectedWebhook;
     private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
     private Webhook newWebhook = new Webhook();
-    private bool isFormVisible = false;
+    private bool isNewWebhookFormVisible = false;
     private Dictionary<Guid, WebhookStatus> pendingStatusUpdates = new();
 
     protected override async Task OnInitializedAsync()
@@ -183,7 +183,7 @@ else
         await WebhookApi.DeleteWebhookAsync(webhookId);
         await LoadWebhooks();
     }
-    private void OnStatusChange(Webhook webhook, WebhookStatus newStatus)
+    private void OnWebhookStatusChange(Webhook webhook, WebhookStatus newStatus)
     {
         pendingStatusUpdates[webhook.Id] = newStatus;
         webhook.Status = newStatus;
@@ -200,9 +200,9 @@ else
             StateHasChanged(); // Ensure the component re-renders
         }
     }
-    private void ToggleFormVisibility()
+    private void ToggleNewWebhookFormVisibility()
     {
-        isFormVisible = !isFormVisible;
+        isNewWebhookFormVisible = !isNewWebhookFormVisible;
     }
     async Task OnWebhookClick(Webhook webhook)
     {
