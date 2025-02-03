@@ -107,10 +107,10 @@ namespace webhooks.ApiService.src
                 .Where(we => we.WebhookId == webhookId)
                 .ToListAsync();
 
-            if (webhookEvents == null || !webhookEvents.Any())
-            {
-                return NotFound();
-            }
+            //if (webhookEvents == null || !webhookEvents.Any())
+            //{
+            //    return NotFound();
+            //}
 
             return Ok(webhookEvents);
         }
