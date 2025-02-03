@@ -7,52 +7,55 @@
 @inject WebhookApiClient WebhookApi
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Weather</PageTitle>
+<PageTitle>Webhooks</PageTitle>
 
 <h3>Webhooks</h3>
 
 <button class="btn btn-secondary" @onclick="RefreshWebhooks">Refresh</button>
+<button class="btn btn-primary" @onclick="ToggleFormVisibility">Add New Webhook</button>
 
-<h4>Add New Webhook</h4>
-<EditForm Model="newWebhook" OnValidSubmit="AddWebhook">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+@if (isFormVisible)
+{
+    <h4>Add New Webhook</h4>
+    <EditForm Model="newWebhook" OnValidSubmit="AddWebhook">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div class="form-group">
-        <label for="name">Name</label>
-        <InputText id="name" class="form-control" @bind-Value="newWebhook.Name" />
-    </div>
-    <div class="form-group">
-        <label for="slug">Slug</label>
-        <InputText id="slug" class="form-control" @bind-Value="newWebhook.Slug" />
-    </div>
-    <div class="form-group">
-        <label for="url">Url</label>
-        <InputText id="url" class="form-control" @bind-Value="newWebhook.Url" />
-    </div>
-    <div class="form-group">
-        <label for="createdBy">Created By</label>
-        <InputText id="createdBy" class="form-control" @bind-Value="newWebhook.CreatedBy" />
-    </div>
-    <div class="form-group">
-        <label for="owner">Owner</label>
-        <InputText id="owner" class="form-control" @bind-Value="newWebhook.Owner" />
-    </div>
-    <div class="form-group">
-        <label for="project">Project</label>
-        <InputText id="project" class="form-control" @bind-Value="newWebhook.Project" />
-    </div>
-    <div class="form-group">
-        <label for="status">Status</label>
-        <InputSelect id="status" class="form-control" @bind-Value="newWebhook.Status">
-            <option value="1">Enabled</option>
-            <option value="2">Disabled</option>
-            <option value="3">Suspended</option>
-        </InputSelect>
-    </div>
-    <button type="submit" class="btn btn-primary">Add Webhook</button>
-</EditForm>
-
+        <div class="form-group">
+            <label for="name">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="newWebhook.Name" />
+        </div>
+        <div class="form-group">
+            <label for="slug">Slug</label>
+            <InputText id="slug" class="form-control" @bind-Value="newWebhook.Slug" />
+        </div>
+        <div class="form-group">
+            <label for="url">Url</label>
+            <InputText id="url" class="form-control" @bind-Value="newWebhook.Url" />
+        </div>
+        <div class="form-group">
+            <label for="createdBy">Created By</label>
+            <InputText id="createdBy" class="form-control" @bind-Value="newWebhook.CreatedBy" />
+        </div>
+        <div class="form-group">
+            <label for="owner">Owner</label>
+            <InputText id="owner" class="form-control" @bind-Value="newWebhook.Owner" />
+        </div>
+        <div class="form-group">
+            <label for="project">Project</label>
+            <InputText id="project" class="form-control" @bind-Value="newWebhook.Project" />
+        </div>
+        <div class="form-group">
+            <label for="status">Status</label>
+            <InputSelect id="status" class="form-control" @bind-Value="newWebhook.Status">
+                <option value="1">Enabled</option>
+                <option value="2">Disabled</option>
+                <option value="3">Suspended</option>
+            </InputSelect>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Webhook</button>
+    </EditForm>
+}
 @if (webhooks == null)
 {
     <p><em>Loading...</em></p>
@@ -85,7 +88,10 @@ else
                     <td>@webhook.Owner</td>
                     <td>@webhook.Project</td>
                     <td>@webhook.Status</td>
-                    <td><button class="btn btn-primary" @onclick="() => OnWebhookClick(webhook)">View Events</button></td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => OnWebhookClick(webhook)">View Events</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteWebhook(webhook.Id)">Delete</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -129,7 +135,7 @@ else
     private Webhook? selectedWebhook;
     private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
     private Webhook newWebhook = new Webhook();
-
+    private bool isFormVisible = false;
     protected override async Task OnInitializedAsync()
     {
         await LoadWebhooks();
@@ -155,10 +161,17 @@ else
         newWebhook = new Webhook(); // Reset the form
         StateHasChanged(); // Ensure the component re-renders
     }
-
+    private async Task DeleteWebhook(Guid webhookId)
+    {
+        await WebhookApi.DeleteWebhookAsync(webhookId);
+        await LoadWebhooks();
+    }
+    private void ToggleFormVisibility()
+    {
+        isFormVisible = !isFormVisible;
+    }
     async Task OnWebhookClick(Webhook webhook)
     {
-        Console.WriteLine($"Fetching events for: {webhook.Name}");
         selectedWebhook = webhook;
         var webhookEventsArray = await WebhookApi.GetWebhookEventsForWebhookAsync(webhook.Id.ToString(), 50);
         webhookEvents = webhookEventsArray.ToList();

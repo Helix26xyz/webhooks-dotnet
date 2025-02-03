@@ -30,6 +30,11 @@ public class WebhookApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<Webhook>(cancellationToken: cancellationToken) ?? new Webhook();
     }
+    public async Task<bool> DeleteWebhookAsync(Guid webhookId, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.DeleteAsync($"/api/webhooks/{webhookId}", cancellationToken);
+        return response.IsSuccessStatusCode;
+    }
 
     public async Task<WebhookEvent[]> GetWebhookEventsForWebhookAsync(string webhookId,  int maxItems = 10, CancellationToken cancellationToken = default)
     {
