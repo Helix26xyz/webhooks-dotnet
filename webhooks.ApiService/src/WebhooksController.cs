@@ -18,14 +18,14 @@ namespace webhooks.ApiService.src
 
         // GET: api/Webhooks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<IWebhook>>> GetWebhooks()
+        public async Task<ActionResult<IEnumerable<Webhook>>> GetWebhooks()
         {
             return await _context.Webhooks.ToListAsync();
         }
 
         // GET: api/Webhooks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<IWebhook>> GetWebhook(Guid id)
+        public async Task<ActionResult<Webhook>> GetWebhook(Guid id)
         {
             var webhook = await _context.Webhooks.FindAsync(id);
 
@@ -39,17 +39,24 @@ namespace webhooks.ApiService.src
 
         // POST: api/Webhooks
         [HttpPost]
-        public async Task<ActionResult<IWebhook>> PostWebhook(IWebhook webhook)
+        public async Task<ActionResult<Webhook>> PostWebhook(Webhook webhook)
         {
-            _context.Webhooks.Add((Webhook)webhook);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Webhooks.Add(webhook);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetWebhook), new { id = webhook.Id }, webhook);
-        }
+                return CreatedAtAction(nameof(GetWebhook), new { id = webhook.Id }, webhook);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            }
 
         // PUT: api/Webhooks/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutWebhook(Guid id, IWebhook webhook)
+        public async Task<IActionResult> PutWebhook(Guid id, Webhook webhook)
         {
             if (id != webhook.Id)
             {
