@@ -87,10 +87,25 @@ else
                     <td>@webhook.CreatedBy</td>
                     <td>@webhook.Owner</td>
                     <td>@webhook.Project</td>
-                    <td>@webhook.Status</td>
+                    <td>
+                        <InputSelect placeholder="webhook"
+                        @bind-Value="webhook.Status"
+                                     @bind-Value:after="() => OnStatusChange(webhook, __value)">
+                        @foreach (var status in Enum.GetValues<WebhookStatus>())
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </InputSelect>
+
+
+                    </td>
                     <td>
                         <button class="btn btn-primary" @onclick="() => OnWebhookClick(webhook)">View Events</button>
                         <button class="btn btn-danger" @onclick="() => DeleteWebhook(webhook.Id)">Delete</button>
+                        @if (pendingStatusUpdates.ContainsKey(webhook.Id))
+                        {
+                            <button class="btn btn-success" @onclick="() => UpdateWebhookStatus(webhook)">Update</button>
+                        }
                     </td>
                 </tr>
             }
@@ -136,6 +151,8 @@ else
     private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
     private Webhook newWebhook = new Webhook();
     private bool isFormVisible = false;
+    private Dictionary<Guid, WebhookStatus> pendingStatusUpdates = new();
+
     protected override async Task OnInitializedAsync()
     {
         await LoadWebhooks();
@@ -165,6 +182,23 @@ else
     {
         await WebhookApi.DeleteWebhookAsync(webhookId);
         await LoadWebhooks();
+    }
+    private void OnStatusChange(Webhook webhook, WebhookStatus newStatus)
+    {
+        pendingStatusUpdates[webhook.Id] = newStatus;
+        webhook.Status = newStatus;
+        StateHasChanged(); // Ensure the component re-renders
+    }
+
+    private async Task UpdateWebhookStatus(Webhook webhook)
+    {
+        if (pendingStatusUpdates.TryGetValue(webhook.Id, out var newStatus))
+        {
+            webhook.Status = newStatus;
+            await WebhookApi.UpdateWebhookAsync(webhook);
+            pendingStatusUpdates.Remove(webhook.Id);
+            StateHasChanged(); // Ensure the component re-renders
+        }
     }
     private void ToggleFormVisibility()
     {

@@ -61,4 +61,10 @@ public class WebhookApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<Webhook>(cancellationToken: cancellationToken) ?? new Webhook();
     }
+    public async Task<bool> UpdateWebhookAsync(Webhook webhook, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PutAsJsonAsync($"/api/webhooks/{webhook.Id}", webhook, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return response.IsSuccessStatusCode;
+    }
 }
