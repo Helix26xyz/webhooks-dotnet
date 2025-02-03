@@ -34,7 +34,7 @@ namespace webhooks.ApiService.src
                 return NotFound();
             }
 
-            return Ok(webhook);
+            return webhook;
         }
 
         // POST: api/Webhooks
@@ -61,6 +61,12 @@ namespace webhooks.ApiService.src
             if (id != webhook.Id)
             {
                 return BadRequest();
+            }
+
+            var existingEntity = await _context.Webhooks.FindAsync(id);
+            if (existingEntity != null)
+            {
+                _context.Entry(existingEntity).State = EntityState.Detached;
             }
 
             _context.Entry(webhook).State = EntityState.Modified;
