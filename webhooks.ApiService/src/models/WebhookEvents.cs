@@ -2,21 +2,24 @@
 
 
 {
-
-
     public class WebhookEvent
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid WebhookId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-        public string Payload { get; set; } = string.Empty;
+        public string? Payload { get; set; }
         public required Webhook Webhook { get; set; }
         public WebhookEventStatus Status { get; set; }
         public WebhookEventSubStatus SubStatus { get; set; }
-
+        public string? StatusResultText { get; set; }
     }
 
+    public class WebhookEventWorkResponse
+    {
+        public WebhookEventSubStatus Status { get; set; }
+        public string? ResultText { get; set; }
+    }
     public enum WebhookEventStatus
     {
         New = 1,

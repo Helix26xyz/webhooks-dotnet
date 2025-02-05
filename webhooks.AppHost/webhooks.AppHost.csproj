@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\webhooks.ApiService\webhooks.ApiService.csproj" />
+    <ProjectReference Include="..\webhooks.DemoClient\webhooks.DemoClient.csproj" />
     <ProjectReference Include="..\webhooks.Web\webhooks.Web.csproj" />
   </ItemGroup>
 
