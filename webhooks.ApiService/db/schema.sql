@@ -1,8 +1,8 @@
-﻿DROP TABLE WebhookEvents
-DROP TABLE WebHooks
-DROP TABLE WebHookStatus
-DROP TABLE WebhookEventStatus
-DROP TABLE WebhookEventSubStatus
+DROP TABLE WebhookEvents;
+DROP TABLE WebHooks;
+DROP TABLE WebHookStatus;
+DROP TABLE WebhookEventStatus;
+DROP TABLE WebhookEventSubStatus;
 
 CREATE TABLE WebhookStatus (
 	Value int NOT NULL PRIMARY KEY,
@@ -41,7 +41,8 @@ CREATE TABLE WebhookEvents (
 	SubStatus int NOT NULL,
     FOREIGN KEY (WebhookId) REFERENCES Webhooks(Id),
     FOREIGN KEY (Status) REFERENCES WebhookEventStatus(Value),
-	FOREIGN KEY (SubStatus) REFERENCES WebhookEventSubStatus(Value)
+	FOREIGN KEY (SubStatus) REFERENCES WebhookEventSubStatus(Value),
+	StatusResultText text
 );
 
 INSERT INTO WebhookStatus (Value, Name) VALUES
@@ -71,9 +72,3 @@ VALUES
     (NEWID(), 'Webhook 3', 'webhook-3', 'webhook3', GETUTCDATE(), 'User1', '1', '1', 1),
     (NEWID(), 'Webhook 4', 'webhook-4', 'webhook4', GETUTCDATE(), 'User1', '1', '1', 1),
     (NEWID(), 'Webhook 5', 'webhook-5', 'webhook5', GETUTCDATE(), 'User1', '1', '1', 1);
-
-
-
-
-
-
