@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webhooks.Tests", "webhooks.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webhooks.DemoClient", "webhooks.DemoClient\webhooks.DemoClient.csproj", "{D335B152-064F-4374-8EE6-16D90DBE56F5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webhooks.StorageMigrations", "webhooks.StorageMigrations\webhooks.StorageMigrations.csproj", "{2538FC3C-89EF-C20F-BAFA-15D8F16EBCDC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{D335B152-064F-4374-8EE6-16D90DBE56F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D335B152-064F-4374-8EE6-16D90DBE56F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D335B152-064F-4374-8EE6-16D90DBE56F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2538FC3C-89EF-C20F-BAFA-15D8F16EBCDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2538FC3C-89EF-C20F-BAFA-15D8F16EBCDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2538FC3C-89EF-C20F-BAFA-15D8F16EBCDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2538FC3C-89EF-C20F-BAFA-15D8F16EBCDC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
