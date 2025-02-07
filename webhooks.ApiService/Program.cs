@@ -3,7 +3,7 @@ using webhooks.ApiService.src;
 using Microsoft.OpenApi.Models; // Add this using directive
 using Swashbuckle.AspNetCore.SwaggerUI; // Add this using directive
 using Swashbuckle.AspNetCore.SwaggerGen; // Add this using directive
-
+using webhooks.SharedModels.storage;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.

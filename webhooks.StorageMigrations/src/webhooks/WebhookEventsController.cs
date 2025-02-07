@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using webhooks.StorageMigrations.src.models;
+using webhooks.SharedModels.models;
 using System.Threading.Tasks;
-using static webhooks.StorageMigrations.src.models.WebhookEvent;
+using static webhooks.SharedModels.models.WebhookEvent;
+using webhooks.SharedModels.storage;
 
 namespace webhooks.StorageMigrations.src
 {

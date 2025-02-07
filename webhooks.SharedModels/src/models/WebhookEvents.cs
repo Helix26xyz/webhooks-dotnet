@@ -1,4 +1,4 @@
-﻿namespace webhooks.StorageMigrations.src.models
+﻿namespace webhooks.SharedModels.models
 
 
 {

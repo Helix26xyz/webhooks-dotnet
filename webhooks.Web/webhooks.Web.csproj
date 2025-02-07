@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\webhooks.ApiService\webhooks.ApiService.csproj" />
     <ProjectReference Include="..\webhooks.ServiceDefaults\webhooks.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\webhooks.SharedModels\webhooks.SharedModels.csproj" />
   </ItemGroup>
 
   <ItemGroup>

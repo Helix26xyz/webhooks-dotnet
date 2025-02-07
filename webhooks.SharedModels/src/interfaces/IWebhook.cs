@@ -1,5 +1,4 @@
-﻿using webhooks.ApiService.src.models;
-namespace webhooks.ApiService.src
+﻿namespace webhooks.SharedModels.models
 {
     public interface IWebhook
     {

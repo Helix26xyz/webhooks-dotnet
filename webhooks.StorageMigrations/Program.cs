@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using webhooks.StorageMigrations.src;
+using webhooks.SharedModels.storage;
 
 var builder = WebApplication.CreateBuilder(args);
 

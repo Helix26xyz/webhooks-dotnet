@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using webhooks.ApiService.src.models;
+using webhooks.SharedModels.models;
 
-namespace webhooks.ApiService.src
+namespace webhooks.SharedModels.storage
 {
     public class AppDbContext : DbContext
     {

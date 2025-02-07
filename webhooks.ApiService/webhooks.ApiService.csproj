@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\webhooks.ServiceDefaults\webhooks.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\webhooks.SharedModels\webhooks.SharedModels.csproj" />
   </ItemGroup>
 
   <ItemGroup>
