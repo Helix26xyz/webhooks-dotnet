@@ -1,0 +1,30 @@
+
+services:
+    web:
+        image: helix26xyz/webhooks-dotnet/web:latest
+        build:
+            context: webhooks.Web
+        ports:
+            - "5000:80"
+            - "6000:443"
+        depends_on:
+            - apiservice
+  
+    apiservice:
+        image: helix26xyz/webhooks-dotnet/apiservice:latest
+        build:
+            context: webhooks.ApiService
+        ports:
+            - "5001:80"
+            - "6002:443"
+        depends_on:
+            - storagemigrations
+ 
+    storagemigrations:
+        image: helix26xyz/webhooks-dotnet/storagemigrations:latest
+        build:
+            context: webhooks.StorageMigrations
+        ports:
+            - "5003:80"
+            - "6003:443"
+           
