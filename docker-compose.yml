@@ -3,28 +3,35 @@ services:
     web:
         image: helix26xyz/webhooks-dotnet/web:latest
         build:
-            context: webhooks.Web
+            context: .
+            dockerfile: webhooks.Web/Dockerfile
         ports:
             - "5000:80"
             - "6000:443"
         depends_on:
             - apiservice
-  
+        volumes:
+            - ./docker.appsettings.json:/app/appsettings.json
+          
     apiservice:
         image: helix26xyz/webhooks-dotnet/apiservice:latest
         build:
-            context: webhooks.ApiService
+            context: .
+            dockerfile: webhooks.ApiService/Dockerfile
+             
         ports:
             - "5001:80"
-            - "6002:443"
+            - "6001:443"
         depends_on:
             - storagemigrations
  
     storagemigrations:
         image: helix26xyz/webhooks-dotnet/storagemigrations:latest
         build:
-            context: webhooks.StorageMigrations
+            context: .
+            dockerfile: webhooks.StorageMigrations/Dockerfile
         ports:
-            - "5003:80"
-            - "6003:443"
-           
+            - "5002:80"
+            - "6002:443"
+        volumes:
+            - ./docker.appsettings.json:/app/appsettings.json

@@ -12,20 +12,22 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["webhooks.ApiService/webhooks.ApiService.csproj", "webhooks.ApiService/"]
+COPY ["webhooks.StorageMigrations/webhooks.StorageMigrations.csproj", "webhooks.StorageMigrations/"]
 COPY ["webhooks.ServiceDefaults/webhooks.ServiceDefaults.csproj", "webhooks.ServiceDefaults/"]
-RUN dotnet restore "./webhooks.ApiService/webhooks.ApiService.csproj"
+COPY ["webhooks.ApiService/webhooks.ApiService.csproj", "webhooks.ApiService/"]
+COPY ["webhooks.SharedModels/webhooks.SharedModels.csproj", "webhooks.SharedModels/"]
+RUN dotnet restore "./webhooks.StorageMigrations/webhooks.StorageMigrations.csproj"
 COPY . .
-WORKDIR "/src/webhooks.ApiService"
-RUN dotnet build "./webhooks.ApiService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/webhooks.StorageMigrations"
+RUN dotnet build "./webhooks.StorageMigrations.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./webhooks.ApiService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./webhooks.StorageMigrations.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "webhooks.ApiService.dll"]
+ENTRYPOINT ["dotnet", "webhooks.StorageMigrations.dll"]

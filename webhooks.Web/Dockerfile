@@ -15,6 +15,7 @@ WORKDIR /src
 COPY ["webhooks.Web/webhooks.Web.csproj", "webhooks.Web/"]
 COPY ["webhooks.ApiService/webhooks.ApiService.csproj", "webhooks.ApiService/"]
 COPY ["webhooks.ServiceDefaults/webhooks.ServiceDefaults.csproj", "webhooks.ServiceDefaults/"]
+COPY ["webhooks.SharedModels/webhooks.SharedModels.csproj", "webhooks.SharedModels/"]
 RUN dotnet restore "./webhooks.Web/webhooks.Web.csproj"
 COPY . .
 WORKDIR "/src/webhooks.Web"

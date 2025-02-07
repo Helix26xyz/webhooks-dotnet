@@ -14,6 +14,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["webhooks.ApiService/webhooks.ApiService.csproj", "webhooks.ApiService/"]
 COPY ["webhooks.ServiceDefaults/webhooks.ServiceDefaults.csproj", "webhooks.ServiceDefaults/"]
+COPY ["webhooks.SharedModels/webhooks.SharedModels.csproj", "webhooks.SharedModels/"]
 RUN dotnet restore "./webhooks.ApiService/webhooks.ApiService.csproj"
 COPY . .
 WORKDIR "/src/webhooks.ApiService"
