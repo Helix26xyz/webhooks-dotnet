@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using webhooks.ApiService;
 using webhooks.ApiService.src;
-using webhooks.ApiService.src.models;
+using webhooks.SharedModels.models;
 using Xunit;
 
 namespace webhooks.ApiService.Tests

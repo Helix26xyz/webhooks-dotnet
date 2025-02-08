@@ -1,6 +1,4 @@
-﻿namespace webhooks.ApiService.src.models
-
-
+﻿namespace webhooks.SharedModels.models
 {
     public class Webhook: IWebhook
     {

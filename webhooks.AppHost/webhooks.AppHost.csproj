@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\webhooks.ApiService\webhooks.ApiService.csproj" />
+    <ProjectReference Include="..\webhooks.DemoClient\webhooks.DemoClient.csproj" />
+    <ProjectReference Include="..\webhooks.StorageMigrations\webhooks.StorageMigrations.csproj" />
     <ProjectReference Include="..\webhooks.Web\webhooks.Web.csproj" />
   </ItemGroup>
 
@@ -26,6 +28,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
 </Project>

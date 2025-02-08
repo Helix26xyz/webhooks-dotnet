@@ -12,25 +12,22 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["webhooks.Web/webhooks.Web.csproj", "webhooks.Web/"]
-COPY ["webhooks.ApiService/webhooks.ApiService.csproj", "webhooks.ApiService/"]
+COPY ["webhooks.StorageMigrations/webhooks.StorageMigrations.csproj", "webhooks.StorageMigrations/"]
 COPY ["webhooks.ServiceDefaults/webhooks.ServiceDefaults.csproj", "webhooks.ServiceDefaults/"]
+COPY ["webhooks.ApiService/webhooks.ApiService.csproj", "webhooks.ApiService/"]
 COPY ["webhooks.SharedModels/webhooks.SharedModels.csproj", "webhooks.SharedModels/"]
-RUN dotnet restore "./webhooks.Web/webhooks.Web.csproj"
+RUN dotnet restore "./webhooks.StorageMigrations/webhooks.StorageMigrations.csproj"
 COPY . .
-WORKDIR "/src/webhooks.Web"
-RUN dotnet build "./webhooks.Web.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/webhooks.StorageMigrations"
+RUN dotnet build "./webhooks.StorageMigrations.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-# docker build complains about multiple publish profiles, so removing the others.
-# probably bad but #insertshrugemoji
-RUN rm /src/webhooks.ApiService/appsettings.Development.json /src/webhooks.Web/appsettings.Development.json /src/webhooks.ApiService/appsettings.json
-RUN dotnet publish "./webhooks.Web.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./webhooks.StorageMigrations.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "webhooks.Web.dll"]
+ENTRYPOINT ["dotnet", "webhooks.StorageMigrations.dll"]

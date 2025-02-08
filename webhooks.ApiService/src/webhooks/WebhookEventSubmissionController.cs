@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using webhooks.ApiService.src.models;
+using webhooks.SharedModels.models;
 using System.Threading.Tasks;
+using webhooks.SharedModels.storage;
 
 namespace webhooks.ApiService.src
 {

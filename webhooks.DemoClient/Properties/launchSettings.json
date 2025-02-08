@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "webhooks.DemoClient": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

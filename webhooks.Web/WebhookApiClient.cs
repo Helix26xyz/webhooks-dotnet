@@ -1,4 +1,4 @@
-using webhooks.ApiService.src.models;
+using webhooks.SharedModels.models;
 using webhooks.ApiService.src;
 
 namespace webhooks.Web;
