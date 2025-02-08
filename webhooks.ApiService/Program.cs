@@ -24,6 +24,16 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    Console.WriteLine("OpenAPI documentation is available at /openapi/v1.json");
+    Console.WriteLine("Building database...");
+    using (var scope = app.Services.CreateScope())
+    {
+
+    Console.WriteLine("Finding context...");
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated();
+        Console.WriteLine("Database built.");
+    }
 }
 
 string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
