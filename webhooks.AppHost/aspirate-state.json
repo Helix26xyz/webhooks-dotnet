@@ -1,0 +1,41 @@
+{
+  "projectPath": ".",
+  "outputPath": "aspirate-output",
+  "namespace": "ns-webhooks-env",
+  "containerRegistry": "ghcr.io",
+  "containerImageTags": [
+    "latest"
+  ],
+  "containerBuilder": "docker",
+  "containerRepositoryPrefix": "helix26xyz",
+  "outputFormat": "kustomize",
+  "skipFinalKustomizeGeneration": false,
+  "privateRegistryEmail": "aspir8@aka.ms",
+  "includeDashboard": true,
+  "useCustomNamespace": true,
+  "secrets": {
+    "salt": "IWlmotE\u002B330Uv9mR",
+    "hash": "fRHNIIzdz2TxaSSfp7sDS07gGwYurqy54utbuAvrn0I=",
+    "secrets": {
+      "cache": {},
+      "apiservice": {
+        "ConnectionStrings__webhooks": "IWlmotE\u002B330Uv9mRxttk1weTf4Z9\u002BRM9yBVRaQyD925QPrkXgAcElgXFHsi7DlWobmf9vu\u002Bi0nBAtxMTGkpSnzcWCqfiXU7dRG2\u002B8tlc1yDAc6TRNuGmeuPlsrOJxh9mh9Aa445KrhRz5vRpsT3M90P70odYfEjSetvf4VDEAJD1l/IMdY\u002BL\u002BiZ4R5gmdDF07kM="
+      },
+      "democlient": {},
+      "storageMigrations": {
+        "ConnectionStrings__webhooks": "IWlmotE\u002B330Uv9mRxttk1weTf4Z9\u002BRM9yBVRaQyD925QPrkXgAcElgXFHsi7DlWobmf9vu\u002Bi0nBAtxMTGkpSnzcWCqfiXU7dRG2\u002B8tlc1yDAc6TRNuGmeuPlsrOJxh9mh9Aa445KrhRz5vRpsT3M90P70odYfEjSetvf4VDEAJD1l/IMdY\u002BL\u002BiZ4R5gmdDF07kM="
+      },
+      "webfrontend": {
+        "ConnectionStrings__cache": "IWlmotE\u002B330Uv9mRRFNkIUaookwFKo4WYoPALzyH5nBQdrJg0lg="
+      },
+      "DefaultConnection-password": {
+        "value": "IWlmotE\u002B330Uv9mRtHGJntaOgiLAZKznYn6PD2qt41ZsC88XqSsCrF/DFPaRL1eAey8="
+      },
+      "DefaultConnection": {
+        "MSSQL_SA_PASSWORD": "IWlmotE\u002B330Uv9mRtHGJntaOgiLAZKznYn6PD2qt41ZsC88XqSsCrF/DFPaRL1eAey8="
+      },
+      "webhooks": {}
+    }
+  },
+  "processAllComponents": true
+}

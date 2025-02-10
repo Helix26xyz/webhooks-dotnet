@@ -60,6 +60,11 @@ namespace webhooks.StorageMigrations.src
             var builder = new SqlConnectionStringBuilder(_connectionString);
             var databaseName = builder.InitialCatalog;
 
+            if (databaseName == null || databaseName == String.Empty)
+            {
+                databaseName = "webhooks";
+            }
+
             builder.InitialCatalog = "master";
 
             using (var connection = new SqlConnection(builder.ConnectionString))

@@ -10,7 +10,7 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("webhooks")));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -32,7 +32,7 @@ app.MapDefaultEndpoints();
 app.MapControllers();
 
 var migrationService = new DatabaseMigrationService(
-    builder.Configuration.GetConnectionString("DefaultConnection"),
+    builder.Configuration.GetConnectionString("webhooks"),
     Path.Combine(AppContext.BaseDirectory, "migrations")
 );
 

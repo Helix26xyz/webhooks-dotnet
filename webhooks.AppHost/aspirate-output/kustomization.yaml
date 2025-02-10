@@ -1,0 +1,15 @@
+namespace: ns-webhooks-env
+
+resources:
+- DefaultConnection
+- storageMigrations
+- apiservice
+- cache
+- webfrontend
+- namespace.yaml
+- dashboard.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+

@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: democlient
+  labels:
+    app: democlient
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  selector:
+    matchLabels:
+      app: democlient
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: democlient
+    spec:
+      containers:
+      - name: democlient
+        image: ghcr.io/helix26xyz/democlient:latest
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: democlient-env
+      terminationGracePeriodSeconds: 180

@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: defaultconnection
+  labels:
+    app: defaultconnection
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  selector:
+    matchLabels:
+      app: defaultconnection
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: defaultconnection
+    spec:
+      containers:
+      - name: defaultconnection
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: tcp
+          containerPort: 1433
+        envFrom:
+        - configMapRef:
+            name: defaultconnection-env
+        - secretRef:
+            name: defaultconnection-secrets
+      terminationGracePeriodSeconds: 180

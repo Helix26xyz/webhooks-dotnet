@@ -1,0 +1,11 @@
+{
+  "TemplatePath": null,
+  "ContainerSettings": {
+    "Registry": "ghcr.io",
+    "RepositoryPrefix": "helix26xyz",
+    "Tags": [
+      "latest"
+    ],
+    "Builder": "docker"
+  }
+}
