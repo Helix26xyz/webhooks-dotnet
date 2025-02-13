@@ -7,6 +7,6 @@
 	},
 	"AllowedHosts": "*",
 	"ConnectionStrings": {
-		"DefaultConnection": "Server=10.10.100.200;Database=DBDocker;TrustServerCertificate=True;MultipleActiveResultSets=true; User Id=sa; Password=super-secret-123"
+		"DefaultConnection": ""
 	}
 }
