@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: webfrontend
-        image: ghcr.io/helix26xyz/webfrontend:latest
+        image: ghcr.io/helix26xyz/webhooks-dotnet-web:main
         imagePullPolicy: IfNotPresent
         ports:
         - name: http

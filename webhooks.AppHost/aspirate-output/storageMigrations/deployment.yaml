@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: storagemigrations
-        image: ghcr.io/helix26xyz/storagemigrations:latest
+        image: ghcr.io/helix26xyz/webhooks-dotnet-storagemigrations:main
         imagePullPolicy: IfNotPresent
         ports:
         - name: http

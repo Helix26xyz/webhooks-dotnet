@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: apiservice
-        image: ghcr.io/helix26xyz/apiservice:latest
+        image: ghcr.io/helix26xyz/webhooks-dotnet-api:main
         imagePullPolicy: IfNotPresent
         ports:
         - name: http

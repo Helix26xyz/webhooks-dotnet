@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: democlient
-        image: ghcr.io/helix26xyz/democlient:latest
+        image: ghcr.io/helix26xyz/democlient:main
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
