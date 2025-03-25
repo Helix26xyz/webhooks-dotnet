@@ -48,6 +48,7 @@ BEGIN
         Payload NVARCHAR(MAX) NULL,
         Status int NOT NULL,
         SubStatus int NOT NULL,
+        StatusResultText NVARCHAR(MAX) NULL,
         FOREIGN KEY (WebhookId) REFERENCES Webhooks(Id),
         FOREIGN KEY (Status) REFERENCES WebhookEventStatus(Value),
         FOREIGN KEY (SubStatus) REFERENCES WebhookEventSubStatus(Value)
