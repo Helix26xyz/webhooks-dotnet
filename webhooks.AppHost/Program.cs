@@ -26,8 +26,8 @@ builder.AddProject<Projects.webhooks_Web>("webfrontend")
     .WithReference(apiService)
     .WaitFor(apiService);
 
-// builder.AddProject<Projects.webhooks_DemoClient>("democlient")
-//     .WithReference(apiService)
-//     .WaitFor(apiService);
+builder.AddProject<Projects.webhooks_WebSocketDemoClient>("websocketdemoclient")
+    .WithReference(apiService)
+    .WaitFor(apiService);
 
 builder.Build().Run();
