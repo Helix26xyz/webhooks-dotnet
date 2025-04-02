@@ -49,8 +49,11 @@ namespace webhooks.ApiService.src
 
         // POST: api/webhook/:webhookSlug
         [HttpPost("{org}/{project}/{webhookSlug}")]
-        public async Task<ActionResult<WebhookEvent>> PostWebhookEvent(String org, String project, String webhookSlug, [FromBody] string payload)
+        public async Task<ActionResult<WebhookEvent>> PostWebhookEvent(String org, String project, String webhookSlug, [FromBody] object payload)
         {
+            try{
+
+            
             var webhook = await _context.Webhooks.FirstOrDefaultAsync(w => w.Slug == webhookSlug &&
             w.Owner == org &&
             w.Project == project &&
@@ -64,7 +67,7 @@ namespace webhooks.ApiService.src
 
             var webhookEvent = new WebhookEvent
             {
-                Payload = payload,
+                Payload = System.Text.Json.JsonSerializer.Serialize(payload),
                 Status = WebhookEventStatus.New,
                 SubStatus = WebhookEventSubStatus.Pending,
                 Webhook = webhook
@@ -73,7 +76,12 @@ namespace webhooks.ApiService.src
             _context.WebhookEvents.Add(webhookEvent);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetWebhookEvent), new { id = webhookEvent.Id }, webhookEvent);
+            return CreatedAtAction(nameof(PostWebhookEvent), new { id = webhookEvent.Id }, webhookEvent);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

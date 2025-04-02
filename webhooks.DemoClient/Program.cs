@@ -13,8 +13,15 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("webhooks")));
 
-var baseApiURL = "https://webhooks.apps.shaut.us/";
-// var baseApiURL = "https+http://apiservice";
+var baseApiURL = builder.Configuration["BaseApiUrl"];
+var name = builder.Configuration["Name"];
+var script = builder.Configuration["Script"];
+var webhook = builder.Configuration["Webhook"];
+
+if (string.IsNullOrEmpty(baseApiURL))
+{
+    throw new ArgumentNullException("BaseApiUrl", "BaseApiUrl is not set in the configuration.");
+}
 
 builder.Services.AddHttpClient<WebhookEventsApiClient>(client =>
 {
@@ -32,9 +39,9 @@ builder.Services.AddSingleton<WebhookConsumer>(sp =>
     var webhookConsumer = WebhookConsumer.CreateAsync(
         webhookEventHttpClient: webhookEventClient,
         webhookHttpClient: webhookClient,
-        name: "DemoConsumer",
-        webhook: "2ec65fff-782d-45c5-b273-2514857ab61c",
-        script: "script.sh"
+        name: name,
+        webhook: webhook,
+        script: script
     ).GetAwaiter().GetResult();
     return webhookConsumer;
 });
