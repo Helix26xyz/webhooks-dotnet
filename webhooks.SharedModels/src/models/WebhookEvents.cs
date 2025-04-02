@@ -20,6 +20,12 @@
         public WebhookEventSubStatus Status { get; set; }
         public string? ResultText { get; set; }
     }
+
+    public class WebhookEventWorkResponseCollection{
+        public int TotalCount { get; set; }
+        public int ProcessedCount { get; set; }
+        public int FailedCount { get; set; }
+    }
     public enum WebhookEventStatus
     {
         New = 1,

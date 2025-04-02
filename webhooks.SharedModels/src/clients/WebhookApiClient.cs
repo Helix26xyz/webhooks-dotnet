@@ -1,7 +1,6 @@
 using webhooks.SharedModels.models;
-using webhooks.ApiService.src;
-
-namespace webhooks.Web;
+using System.Net.Http.Json;
+namespace webhooks.SharedModels.clients;
 
 public class WebhookApiClient(HttpClient httpClient)
 {

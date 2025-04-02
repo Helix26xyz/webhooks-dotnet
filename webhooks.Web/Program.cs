@@ -1,5 +1,6 @@
 using webhooks.Web;
 using webhooks.Web.Components;
+using webhooks.SharedModels.clients;
 
 var builder = WebApplication.CreateBuilder(args);
 
