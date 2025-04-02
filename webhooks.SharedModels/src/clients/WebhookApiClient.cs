@@ -1,7 +1,6 @@
 using webhooks.SharedModels.models;
-using webhooks.ApiService.src;
-
-namespace webhooks.Web;
+using System.Net.Http.Json;
+namespace webhooks.SharedModels.clients;
 
 public class WebhookApiClient(HttpClient httpClient)
 {
@@ -23,6 +22,12 @@ public class WebhookApiClient(HttpClient httpClient)
         }
 
         return webhooks?.ToArray() ?? [];
+    }
+    public async Task<Webhook?> GetWebhookAsync(string webhookId, CancellationToken cancellationToken = default)
+    {
+        Webhook? webhook = await httpClient.GetFromJsonAsync<Webhook>($"/api/webhooks/{webhookId}", cancellationToken);
+
+        return webhook;
     }
     public async Task<Webhook> AddWebhookAsync(Webhook newWebhook, CancellationToken cancellationToken = default)
     {
