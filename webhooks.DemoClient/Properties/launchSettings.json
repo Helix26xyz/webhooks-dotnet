@@ -3,7 +3,12 @@
     "http": {
       "commandName": "Project",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "BaseApiUrl:default": "https+http://apiservice",
+        "BaseApiUrl": "http://localhost:5431",
+        "Name":"webhooks.DemoClient",
+        "webhook":"718eb228-4143-40cc-b2d3-ad7e5f1b752e",
+        "Script":"script.py"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5433"

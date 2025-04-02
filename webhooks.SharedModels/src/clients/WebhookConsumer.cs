@@ -17,6 +17,7 @@ namespace webhooks.SharedModels.clients
             Name = name;
             Webhook = webhook;
             Script = script;
+
         }
         public static async Task<WebhookConsumer> CreateAsync(WebhookEventsApiClient webhookEventHttpClient, WebhookApiClient webhookHttpClient, string name, string webhook, string script)
         {
@@ -36,7 +37,43 @@ namespace webhooks.SharedModels.clients
         public async Task<WebhookEventWorkResponse> ProcessWebhookEventAsync(WebhookEvent webhookEvent)
         {
             Console.WriteLine($"Processing webhook event {webhookEvent.Id} for webhook {webhookEvent.WebhookId}");
-            await Task.Delay(1000); // Simulate processing time
+
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardInput = true; // Enable stdin redirection
+            process.StartInfo.RedirectStandardOutput = true;
+
+            if (Script.EndsWith(".sh"))
+            {
+                process.StartInfo.FileName = Script;
+                process.StartInfo.Arguments = $"{webhookEvent.Id}";
+            }
+            else if (Script.EndsWith(".py"))
+            {
+                process.StartInfo.FileName = "python";
+                process.StartInfo.Arguments = $"{Script} {webhookEvent.Id}";
+            }
+            else
+            {
+                throw new Exception("Unsupported script type");
+            }
+
+            // Start the process
+            process.Start();
+
+            // Write the JSON payload to stdin
+            if (!string.IsNullOrEmpty(webhookEvent.Payload))
+            {
+                await process.StandardInput.WriteAsync(webhookEvent.Payload);
+            }
+            process.StandardInput.Close(); // Close stdin to signal end of input
+
+            // Read the output from the script
+            var output = await process.StandardOutput.ReadToEndAsync();
+            Console.WriteLine(output);
+
+            // Wait for the process to exit
+            await process.WaitForExitAsync();
 
             var result = new WebhookEventWorkResponse
             {
@@ -47,6 +84,7 @@ namespace webhooks.SharedModels.clients
             await webhookEventHttpClient.updateWebhookEventAsync(webhookEvent.Id, result);
             return result;
         }
+
         public async Task<WebhookEventWorkResponseCollection> StartProcessingLoopAsync()
         {
             var results = new WebhookEventWorkResponseCollection();
@@ -55,11 +93,13 @@ namespace webhooks.SharedModels.clients
 
             while (true)
             {
-                var nextWebook = await GetNextWebhookEventAsync();
-                if (nextWebook != null)
+                Console.WriteLine("Checking for next webhook event");
+                var nextWebhook = await GetNextWebhookEventAsync();
+                if (nextWebhook != null)
                 {
                     // Process the webhook event.
-                    var result = await ProcessWebhookEventAsync(nextWebook);
+                    var result = await ProcessWebhookEventAsync(nextWebhook);
+
 
                     // Update the results.
                     if (result.Status == WebhookEventSubStatus.Success)
@@ -71,8 +111,8 @@ namespace webhooks.SharedModels.clients
                         results.FailedCount++;
                     }
                 }
-                // delay for 30s
-                await Task.Delay(30000);
+                // delay for 100ms
+                await Task.Delay(100);
 
                 if (results.TotalCount > 100)
                 {
