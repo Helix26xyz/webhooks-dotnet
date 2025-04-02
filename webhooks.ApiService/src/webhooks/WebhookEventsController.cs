@@ -62,7 +62,7 @@ namespace webhooks.ApiService.src
                     var webhookEvent = await _context.WebhookEvents
                         .Where(we => we.WebhookId == webhookId && we.Status == WebhookEventStatus.New)
                         .OrderBy(we => we.CreatedAt)
-                        .FirstOrDefaultAsync();
+                        .FirstAsync();
 
                     if (webhookEvent == null)
                     {
