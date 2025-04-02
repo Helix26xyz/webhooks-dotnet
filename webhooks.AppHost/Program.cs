@@ -14,9 +14,8 @@ var storageMigrationsClient = builder.AddProject<Projects.webhooks_StorageMigrat
     .WaitFor(db);
 
 var apiService = builder.AddProject<Projects.webhooks_ApiService>("apiservice")
-    .WithReference(db);
-
-//var demoClient = builder.AddProject<Projects.webhooks_DemoClient>("democlient");
+    .WithReference(db)
+    .WithExternalHttpEndpoints();
 
 var cache = builder.AddRedis("cache");
 
@@ -24,6 +23,10 @@ builder.AddProject<Projects.webhooks_Web>("webfrontend")
     .WithExternalHttpEndpoints()
     .WithReference(cache)
     .WaitFor(cache)
+    .WithReference(apiService)
+    .WaitFor(apiService);
+
+builder.AddProject<Projects.webhooks_DemoClient>("democlient")
     .WithReference(apiService)
     .WaitFor(apiService);
 

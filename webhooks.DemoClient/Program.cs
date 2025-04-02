@@ -13,21 +13,30 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("webhooks")));
 
+var baseApiURL = "https://webhooks.apps.shaut.us/";
+// var baseApiURL = "https+http://apiservice";
+
 builder.Services.AddHttpClient<WebhookEventsApiClient>(client =>
 {
-    client.BaseAddress = new("https+http://apiservice");
+    client.BaseAddress = new(baseApiURL);
+});
+builder.Services.AddHttpClient<WebhookApiClient>(client =>
+{
+    client.BaseAddress = new(baseApiURL);
 });
 
 builder.Services.AddSingleton<WebhookConsumer>(sp =>
 {
-    var webhook = new Webhook(); // TODO: Replace with actual Webhook lookup logic
-    var client = sp.GetRequiredService<WebhookEventsApiClient>();
-    return new WebhookConsumer(
+    var webhookEventClient = sp.GetRequiredService<WebhookEventsApiClient>();
+    var webhookClient = sp.GetRequiredService<WebhookApiClient>();
+    var webhookConsumer = WebhookConsumer.CreateAsync(
+        webhookEventHttpClient: webhookEventClient,
+        webhookHttpClient: webhookClient,
         name: "DemoConsumer",
-        webhook: webhook,
-        script: "script.sh",
-        httpClient: client
-    );
+        webhook: "2ec65fff-782d-45c5-b273-2514857ab61c",
+        script: "script.sh"
+    ).GetAwaiter().GetResult();
+    return webhookConsumer;
 });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

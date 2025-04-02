@@ -4,25 +4,31 @@ namespace webhooks.SharedModels.clients
 {
     public class WebhookConsumer : IWebhookConsumer
     {
-        private readonly WebhookEventsApiClient httpClient;
+        private readonly WebhookEventsApiClient webhookEventHttpClient;
+        private readonly WebhookApiClient webhookHttpClient;
         public string Name { get; set; }
         public Webhook Webhook { get; set; }
         public string Script { get; set; }
 
-        public WebhookConsumer(WebhookEventsApiClient httpClient, string name, Webhook webhook, string script)
+        public WebhookConsumer(WebhookEventsApiClient webhookEventHttpClient, WebhookApiClient webhookHttpClient, string name, Webhook webhook, string script)
         {
-            // Initialize the HttpClient
-            this.httpClient = httpClient;
+            this.webhookEventHttpClient = webhookEventHttpClient;
+            this.webhookHttpClient = webhookHttpClient;
             Name = name;
             Webhook = webhook;
             Script = script;
+        }
+        public static async Task<WebhookConsumer> CreateAsync(WebhookEventsApiClient webhookEventHttpClient, WebhookApiClient webhookHttpClient, string name, string webhook, string script)
+        {
+            var _webhook = await webhookHttpClient.GetWebhookAsync(webhook);
+            return new WebhookConsumer(webhookEventHttpClient, webhookHttpClient, name, _webhook, script);
         }
 
         private async Task<WebhookEvent?> GetNextWebhookEventAsync()
         {
             // call the webhook API to get the next webhook event at api/webhookevents/receive/{this.webhook}
             // return the webhook event
-            var result = await httpClient.GetWebhookEventAsync(Webhook.Id);
+            var result = await webhookEventHttpClient.GetWebhookEventAsync(Webhook.Id);
             return result;
 
         }
@@ -38,7 +44,7 @@ namespace webhooks.SharedModels.clients
                 ResultText = "Webhook event processed successfully"
             };
 
-            await httpClient.updateWebhookEventAsync(webhookEvent.Id, result);
+            await webhookEventHttpClient.updateWebhookEventAsync(webhookEvent.Id, result);
             return result;
         }
         public async Task<WebhookEventWorkResponseCollection> StartProcessingLoopAsync()

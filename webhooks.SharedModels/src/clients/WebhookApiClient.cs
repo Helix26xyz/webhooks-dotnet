@@ -23,6 +23,12 @@ public class WebhookApiClient(HttpClient httpClient)
 
         return webhooks?.ToArray() ?? [];
     }
+    public async Task<Webhook?> GetWebhookAsync(string webhookId, CancellationToken cancellationToken = default)
+    {
+        Webhook? webhook = await httpClient.GetFromJsonAsync<Webhook>($"/api/webhooks/{webhookId}", cancellationToken);
+
+        return webhook;
+    }
     public async Task<Webhook> AddWebhookAsync(Webhook newWebhook, CancellationToken cancellationToken = default)
     {
         var response = await httpClient.PostAsJsonAsync("/api/webhooks", newWebhook, cancellationToken);
