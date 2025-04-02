@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webhooks.StorageMigrations"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webhooks.SharedModels", "webhooks.SharedModels\webhooks.SharedModels.csproj", "{F0F4B27C-023C-4B54-9BC3-97CF50D970BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webhooks.WebSocketDemoClient", "webhooks.WebSocketDemoClient\webhooks.WebSocketDemoClient.csproj", "{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
@@ -62,6 +64,10 @@ Global
 		{F0F4B27C-023C-4B54-9BC3-97CF50D970BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F0F4B27C-023C-4B54-9BC3-97CF50D970BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F0F4B27C-023C-4B54-9BC3-97CF50D970BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
