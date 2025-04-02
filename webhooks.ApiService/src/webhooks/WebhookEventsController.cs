@@ -66,7 +66,8 @@ namespace webhooks.ApiService.src
 
                     if (webhookEvent == null)
                     {
-                        return NotFound();
+                        // return a 204 No Content if no webhook event is found
+                        return NoContent();
                     }
 
                     // Mark it as received
