@@ -15,7 +15,7 @@ public class WebhookEventsApiClient(HttpClient httpClient)
     public async Task<bool> updateWebhookEventAsync(Guid webhookId, WebhookEventWorkResponse response, CancellationToken cancellationToken = default)
     {
 
-        var res = await httpClient.PostAsJsonAsync<WebhookEventWorkResponse>($"/api/webhookevents/return/{webhookId.ToString()}", response, cancellationToken);
+        var res = await httpClient.PutAsJsonAsync<WebhookEventWorkResponse>($"/api/webhookevents/return/{webhookId.ToString()}", response, cancellationToken);
 
 
         return res != null;
