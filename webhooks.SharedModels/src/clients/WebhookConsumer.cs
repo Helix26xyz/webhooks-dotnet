@@ -55,11 +55,11 @@ namespace webhooks.SharedModels.clients
 
             while (true)
             {
-                var nextWebook = await GetNextWebhookEventAsync();
-                if (nextWebook != null)
+                var nextWebhook = await GetNextWebhookEventAsync();
+                if (nextWebhook != null)
                 {
                     // Process the webhook event.
-                    var result = await ProcessWebhookEventAsync(nextWebook);
+                    var result = await ProcessWebhookEventAsync(nextWebhook);
 
                     // Update the results.
                     if (result.Status == WebhookEventSubStatus.Success)
