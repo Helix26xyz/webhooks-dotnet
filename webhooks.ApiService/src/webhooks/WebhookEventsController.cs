@@ -41,10 +41,20 @@ namespace webhooks.ApiService.src
 
         // GET: api/webhookevents/bywebhook/{webhookId}
         [HttpGet("bywebhook/{webhookId}")]
-        public async Task<ActionResult<IEnumerable<WebhookEvent>>> GetWebhookEventsByWebhookId(Guid webhookId)
+        public async Task<ActionResult<IEnumerable<object>>> GetWebhookEventsByWebhookId(Guid webhookId)
         {
             var webhookEvents = await _context.WebhookEvents
                 .Where(we => we.WebhookId == webhookId)
+                .Select(we => new
+                {
+                    we.Id,
+                    we.WebhookId,
+                    we.CreatedAt,
+                    we.UpdatedAt,
+                    Status = we.Status.ToString(), // Convert enum to string
+                    SubStatus = we.SubStatus.ToString(), // Convert enum to string
+                    we.StatusResultText
+                })
                 .ToListAsync();
 
             return Ok(webhookEvents);
@@ -62,7 +72,7 @@ namespace webhooks.ApiService.src
                     var webhookEvent = await _context.WebhookEvents
                         .Where(we => we.WebhookId == webhookId && we.Status == WebhookEventStatus.New)
                         .OrderBy(we => we.CreatedAt)
-                        .FirstOrDefaultAsync();
+                        .FirstAsync();
 
                     if (webhookEvent == null)
                     {
