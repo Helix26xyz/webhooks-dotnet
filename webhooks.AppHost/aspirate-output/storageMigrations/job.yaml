@@ -1,23 +1,18 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: storagemigrations
   labels:
     app: storagemigrations
 spec:
-  minReadySeconds: 60
-  replicas: 1
-  selector:
-    matchLabels:
-      app: storagemigrations
-  strategy:
-    type: Recreate
+  backoffLimit: 0 # Do not retry the job if it fails
   template:
     metadata:
       labels:
         app: storagemigrations
     spec:
+      restartPolicy: OnFailure # Restart only if the container fails
       containers:
       - name: storagemigrations
         image: ghcr.io/helix26xyz/webhooks-dotnet-storagemigrations:main

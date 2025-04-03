@@ -1,5 +1,5 @@
 resources:
-- deployment.yaml
+- job.yaml
 - service.yaml
 
 generatorOptions:
