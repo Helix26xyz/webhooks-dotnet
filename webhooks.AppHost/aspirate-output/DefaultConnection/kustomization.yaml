@@ -12,7 +12,7 @@ configMapGenerator:
     - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
     - OTEL_SERVICE_NAME=DefaultConnection
 
-secretGenerator:
-- name: defaultconnection-secrets
-  envs:
-  - .defaultconnection.secrets
+# secretGenerator:
+# - name: defaultconnection-secrets
+#   envs:
+#   - .defaultconnection.secrets

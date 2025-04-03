@@ -18,7 +18,7 @@ configMapGenerator:
     - OTEL_SERVICE_NAME=webfrontend
     - ASPNETCORE_URLS=http://+:8080;
 
-secretGenerator:
-- name: webfrontend-secrets
-  envs:
-  - .webfrontend.secrets
+# secretGenerator:
+# - name: webfrontend-secrets
+#   envs:
+#   - .webfrontend.secrets

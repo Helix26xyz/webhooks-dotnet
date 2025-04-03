@@ -17,7 +17,7 @@ configMapGenerator:
     - OTEL_SERVICE_NAME=storageMigrations
     - ASPNETCORE_URLS=http://+:8080;
 
-secretGenerator:
-- name: storagemigrations-secrets
-  envs:
-  - .storagemigrations.secrets
+# secretGenerator:
+# - name: storagemigrations-secrets
+#   envs:
+#   - .storagemigrations.secrets
