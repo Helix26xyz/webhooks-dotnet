@@ -48,7 +48,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-
+            type=raw,value=${{ github.sha }}
 
       - name: Build and push Docker image for StorageMigrations
         id: push_storagemigrations
@@ -72,6 +72,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ github.sha }}
 
       - name: Build and push Docker image for API Services
         id: push_api
@@ -95,6 +96,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ github.sha }}
 
       - name: Build and push Docker image for Web Services
         id: push_web
@@ -112,6 +114,13 @@ jobs:
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-democlient
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ github.sha }}
 
       - name: Build and push Docker image for DemoClient
         id: push_democlient
@@ -122,4 +131,4 @@ jobs:
           push: true
           tags: ${{ steps.meta-democlient.outputs.tags }}
           labels: ${{ steps.meta-web.outputs.labels }}
-          
+
