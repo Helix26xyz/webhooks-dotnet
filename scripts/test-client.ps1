@@ -25,6 +25,8 @@ $webhookId = $firstWebhook.id
 # Submit a test event
 $newWebhookEvent = irm -uri "$apihost/api/wes/$owner/$project/$slug" -method GET -headers $headers
 
+$newWebhookEvent = irm -uri "$apihost/api/wes/$owner/$project/$slug" -method POST -headers $headers -body (@{message = "Test message"; data = "Test data"} | ConvertTo-Json -Depth 5)
+
 
 # Get an event
 $webhookEvent = irm -uri "$apihost/api/webhookevents/receive/$webhookId" -method GET -headers $headers
