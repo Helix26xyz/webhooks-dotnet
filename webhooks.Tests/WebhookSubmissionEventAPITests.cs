@@ -19,7 +19,7 @@ namespace webhooks.ApiService.Tests
         public WebhookSubmissionEventAPITests()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
+                .UseInMemoryDatabase(databaseName: $"TestDatabase_{Guid.NewGuid()}")
                 .Options;
 
             _context = new AppDbContext(options);
