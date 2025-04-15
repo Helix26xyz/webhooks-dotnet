@@ -59,6 +59,35 @@ namespace webhooks.ApiService.src
 
             return Ok(webhookEvents);
         }
+        
+        // GET: api/webhookevents/backlog/{webhookId}
+        [HttpGet("backlog/{webhookId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetWebhookBacklog(Guid webhookId)
+        {
+            var webhookEvents = await _context.WebhookEvents
+                .Where(we => we.WebhookId == webhookId)
+                .Where(we => we.Status == WebhookEventStatus.New || we.Status == WebhookEventStatus.Received)
+                .Select(we => new
+                {
+                    we.Id,
+                    we.WebhookId,
+                    we.CreatedAt,
+                    we.UpdatedAt,
+                    Status = we.Status,
+                    SubStatus = we.SubStatus,
+                    we.StatusResultText
+                })
+                .ToListAsync();
+
+            // return the count of the backlog by status
+            var backlogCount = new WebhookEventsAggregateSummary
+            {
+                New = webhookEvents.Count(we => we.Status == WebhookEventStatus.New),
+                InProcess = webhookEvents.Count(we => we.Status == WebhookEventStatus.Received)
+            };
+
+            return Ok(backlogCount);
+        }
 
         // GET: api/webhookevents/receive/{webhookId}
         [HttpGet("receive/{webhookId}")]

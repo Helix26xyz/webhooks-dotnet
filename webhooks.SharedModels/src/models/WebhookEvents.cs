@@ -26,6 +26,10 @@
         public int ProcessedCount { get; set; }
         public int FailedCount { get; set; }
     }
+    public class WebhookEventsAggregateSummary{
+        public int New { get; set; }
+        public int InProcess { get; set; }
+    }
     public enum WebhookEventStatus
     {
         New = 1,
