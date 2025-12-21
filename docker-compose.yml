@@ -1,7 +1,27 @@
-
 services:
+    mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        hostname: mssql
+        container_name: mssql
+        environment:
+            - ACCEPT_EULA=Y
+            - SA_PASSWORD=YourStrong!Passw0rd
+            - MSSQL_PID=Developer
+        ports:
+            - "1433:1433"
+        volumes:
+            - mssql-data:/var/opt/mssql
+        healthcheck:
+            test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -P 'YourStrong!Passw0rd' -Q 'SELECT 1' || exit 1" ]
+            interval: 10s
+            timeout: 3s
+            retries: 10
+            start_period: 10s
+
     web:
         image: helix26xyz/webhooks-dotnet/web:latest
+        hostname: web
+        container_name: web
         build:
             context: .
             dockerfile: webhooks.Web/Dockerfile
@@ -9,21 +29,25 @@ services:
             - "5000:8080"
             - "6000:443"
         depends_on:
-            - apiservice
+            apiservice:
+                condition: service_started
         volumes:
             - ./docker.appsettings.json:/app/appsettings.json:ro
-          
+
     apiservice:
         image: helix26xyz/webhooks-dotnet/apiservice:latest
+        hostname: apiservice
+        container_name: apiservice
         build:
             context: .
             dockerfile: webhooks.ApiService/Dockerfile
-             
+
         ports:
             - "5001:8080"
             - "6001:443"
         depends_on:
-            - storagemigrations
+            storagemigrations:
+                condition: service_started
         volumes:
             - ./docker.appsettings.json:/app/appsettings.json:ro
     storagemigrations:
@@ -34,5 +58,12 @@ services:
         ports:
             - "5002:8080"
             - "6002:443"
+        depends_on:
+            mssql:
+                condition: service_healthy
         volumes:
             - ./docker.appsettings.json:/app/appsettings.json:ro
+        restart: on-failure
+
+volumes:
+    mssql-data:
