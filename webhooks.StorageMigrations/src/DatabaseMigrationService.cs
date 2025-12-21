@@ -136,21 +136,33 @@ namespace webhooks.StorageMigrations.src
 
             using (var connection = new SqlConnection(_connectionString))
             {
-                // get current migration status
-                var query = "SELECT [MigrationName] FROM [dbo].[Migrations] WHERE [Backend] = 'CoreDatabase'";
+                await connection.OpenAsync();
+                
+                // Check if Migrations table exists
+                var checkTableQuery = "SELECT CASE WHEN OBJECT_ID('dbo.Migrations', 'U') IS NOT NULL THEN 1 ELSE 0 END";
                 var appliedMigrations = new List<string>();
-
-                using (var reader = await RunSQLQueryReadAsync(query, connection))
+                
+                using (var checkCommand = new SqlCommand(checkTableQuery, connection))
                 {
-                    while (await reader.ReadAsync())
+                    var tableExists = (int)await checkCommand.ExecuteScalarAsync() == 1;
+                    
+                    if (tableExists)
                     {
-                        appliedMigrations.Add(reader.GetString(0));
+                        // get current migration status
+                        var query = "SELECT [MigrationName] FROM [dbo].[Migrations] WHERE [Backend] = 'CoreDatabase'";
+                        using (var command = new SqlCommand(query, connection))
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                appliedMigrations.Add(reader.GetString(0));
+                            }
+                        }
                     }
-                }
-
-                if (connection.State != ConnectionState.Open)
-                {
-                    await connection.OpenAsync();
+                    else
+                    {
+                        Console.WriteLine("Migrations table does not exist yet. Will create it with first migration.");
+                    }
                 }
 
                 foreach (var file in sqlFiles)
@@ -164,6 +176,7 @@ namespace webhooks.StorageMigrations.src
                         continue;
                     }
 
+                    Console.WriteLine($"Applying migration: {fileName}");
                     var commandText = await File.ReadAllTextAsync(file);
                     await RunSQLNonQueryCommandAsync(commandText, connection);
                     await MarkMigrationCompleteAsync(fileName, connection);
