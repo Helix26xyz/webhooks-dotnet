@@ -219,7 +219,6 @@ else
 
     private async Task ViewWebhookUrl(Webhook webhook)
     {
-        var webhookUrl = $"{JSRuntime.GetType().Assembly.Location}/api/wes/{webhook.Owner}/{webhook.Project}/{webhook.Slug}";
         var baseUrl = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
         var fullWebhookUrl = $"{baseUrl}/api/wes/{webhook.Owner}/{webhook.Project}/{webhook.Slug}";
         await JSRuntime.InvokeVoidAsync("alert", $"Webhook URL:\n\n{fullWebhookUrl}");
