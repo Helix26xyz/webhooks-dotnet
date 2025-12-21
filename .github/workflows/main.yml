@@ -72,7 +72,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=${{ github.sha }}
+            type=raw,value=${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Build and push Docker image for API Services
         id: push_api
@@ -96,7 +96,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=${{ github.sha }}
+            type=raw,value=${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Build and push Docker image for Web Services
         id: push_web
@@ -120,7 +120,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=${{ github.sha }}
+            type=raw,value=${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Build and push Docker image for DemoClient
         id: push_democlient
