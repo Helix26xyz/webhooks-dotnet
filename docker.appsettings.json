@@ -7,6 +7,7 @@
 	},
 	"AllowedHosts": "*",
 	"ConnectionStrings": {
-		"DefaultConnection": ""
+		"DefaultConnection": "Server=mssql,1433;Database=WebhooksDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;",
+		"webhooks": "Server=mssql,1433;Database=WebhooksDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
 	}
 }
