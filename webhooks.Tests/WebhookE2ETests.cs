@@ -44,9 +44,6 @@ namespace webhooks.ApiService.Tests
             _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
             _mockEncryptionService.Setup(e => e.IsEncrypted(It.IsAny<string>())).Returns(false);
             
-            _webhookcontroller = new WebhooksController(_context, _mockEncryptionService.Object);
-            _eventcontroller = new WebhookEventsController(_context);
-            
             // Setup mock backend factory
             _mockBackendFactory = new Mock<IWebhookBackendFactory>();
             var mockLogger = new Mock<ILogger<WebhookEventsSubmissionController>>();
@@ -64,6 +61,9 @@ namespace webhooks.ApiService.Tests
             _mockBackendFactory.Setup(f => f.GetBackend(It.IsAny<WebhookBackendType>()))
                 .Returns(mockBackend.Object);
             
+            // Initialize controllers
+            _webhookcontroller = new WebhooksController(_context, _mockEncryptionService.Object, _mockBackendFactory.Object);
+            _eventcontroller = new WebhookEventsController(_context);
             _submissioncontroller = new WebhookEventsSubmissionController(_context, _mockBackendFactory.Object, mockLogger.Object, _mockEncryptionService.Object);
 
             _webhookId = Guid.NewGuid();

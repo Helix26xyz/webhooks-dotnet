@@ -11,6 +11,7 @@ using webhooks.SharedModels.models;
 using webhooks.SharedModels.security;
 using Xunit;
 using webhooks.SharedModels.storage;
+using webhooks.SharedModels.backends;
 
 
 namespace webhooks.ApiService.Tests
@@ -20,6 +21,7 @@ namespace webhooks.ApiService.Tests
         private readonly AppDbContext _context;
         private readonly WebhooksController _controller;
         private readonly Mock<IEncryptionService> _mockEncryptionService;
+        private readonly Mock<IWebhookBackendFactory> _mockBackendFactory;
 
         public WebhooksControllerTests()
         {
@@ -35,7 +37,13 @@ namespace webhooks.ApiService.Tests
             _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
             _mockEncryptionService.Setup(e => e.IsEncrypted(It.IsAny<string>())).Returns(false);
             
-            _controller = new WebhooksController(_context, _mockEncryptionService.Object);
+            // Setup mock backend factory
+            _mockBackendFactory = new Mock<IWebhookBackendFactory>();
+            var mockBackend = new Mock<IWebhookBackend>();
+            mockBackend.Setup(b => b.TestConnectionAsync(It.IsAny<Webhook>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            _mockBackendFactory.Setup(f => f.GetBackend(It.IsAny<WebhookBackendType>())).Returns(mockBackend.Object);
+            
+            _controller = new WebhooksController(_context, _mockEncryptionService.Object, _mockBackendFactory.Object);
 
             // Seed the database with test data
             _context.Webhooks.AddRange(new List<Webhook>
@@ -70,6 +78,7 @@ namespace webhooks.ApiService.Tests
             // Assert
             //var actionResult = Assert.IsType<ActionResult<Webhook>>(result);
             //var model = Assert.IsAssignableFrom<IEnumerable<Webhook>>(actionResult.Value);
+            Assert.NotNull(result.Value);
             Assert.Equal(webhookId, result.Value.Id);
         }
 
@@ -117,6 +126,7 @@ namespace webhooks.ApiService.Tests
             // Assert
             Assert.IsType<NoContentResult>(result);
             var updatedWebhook = await _context.Webhooks.FindAsync(webhookId);
+            Assert.NotNull(updatedWebhook);
             Assert.Equal("UpdatedWebhook", updatedWebhook.Name);
         }
 

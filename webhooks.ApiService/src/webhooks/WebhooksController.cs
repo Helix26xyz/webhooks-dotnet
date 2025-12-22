@@ -151,8 +151,11 @@ namespace webhooks.ApiService.src
                 // Get the appropriate backend
                 var backend = _backendFactory.GetBackend(webhook.BackendType);
 
-                // Test the connection
-                var success = await backend.TestConnectionAsync(webhook);
+                // Decrypt BackendConfig for backend use only
+                var webhookForBackend = webhook.GetWebhookForBackend(_encryptionService);
+
+                // Test the connection using decrypted config
+                var success = await backend.TestConnectionAsync(webhookForBackend);
 
                 return Ok(new WebhookBackendResult
                 {
