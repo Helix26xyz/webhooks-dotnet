@@ -28,7 +28,7 @@ namespace webhooks.ApiService.Tests
         private readonly Mock<IEncryptionService> _mockEncryptionService;
 
         private Guid _webhookId;
-        private Guid _webhookEventId;
+        
         public WebhookE2ETests()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()

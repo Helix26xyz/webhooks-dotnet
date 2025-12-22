@@ -1,4 +1,5 @@
 using webhooks.SharedModels.models;
+using webhooks.SharedModels.backends;
 using System.Net.Http.Json;
 namespace webhooks.SharedModels.clients;
 
@@ -82,12 +83,12 @@ public class WebhookApiClient(HttpClient httpClient)
             var error = await response.Content.ReadAsStringAsync(cancellationToken);
             return new WebhookBackendResult
             {
-                IsSuccess = false,
+                Success = false,
                 Message = $"HTTP {response.StatusCode}: {error}"
             };
         }
         
         return await response.Content.ReadFromJsonAsync<WebhookBackendResult>(cancellationToken: cancellationToken) 
-               ?? new WebhookBackendResult { IsSuccess = false, Message = "No response from server" };
+               ?? new WebhookBackendResult { Success = false, Message = "No response from server" };
     }
 }

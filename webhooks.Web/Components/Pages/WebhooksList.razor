@@ -71,7 +71,7 @@
         <div class="form-group">
             <label for="backendConfig">Connection String</label>
             <InputText id="backendConfig" class="form-control" @bind-Value="newWebhook.BackendConfig" 
-                       placeholder="@GetPlaceholder(newWebhook.BackendType)" />
+                       placeholder="@GetPlaceholder(newWebhook.BackendType.ToString())" />
             <small class="form-text text-muted">This will be encrypted when saved. Never exposed via API.</small>
         </div>
         
@@ -201,7 +201,7 @@ else
     private List<Webhook> webhooks = new List<Webhook>();
     private Webhook? selectedWebhook;
     private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
-    private Webhook newWebhook = new Webhook { BackendType = "Database", DeliveryMode = "Synchronous" };
+    private Webhook newWebhook = new Webhook { BackendType = WebhookBackendType.Database, DeliveryMode = WebhookDeliveryMode.Synchronous };
     private bool isNewWebhookFormVisible = false;
     private Dictionary<Guid, WebhookStatus> pendingStatusUpdates = new();
     private bool isTestingConnection = false;
@@ -295,7 +295,7 @@ else
         {
             var result = await WebhookApi.TestBackendConnectionAsync(newWebhook);
             
-            if (result.IsSuccess)
+            if (result.Success)
             {
                 testConnectionMessage = $"✓ Connection successful! {result.Message}";
                 testConnectionClass = "text-success";

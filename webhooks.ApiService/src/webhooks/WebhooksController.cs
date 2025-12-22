@@ -143,24 +143,28 @@ namespace webhooks.ApiService.src
             try
             {
                 // Encrypt the config before testing (mimics what would be saved)
-                if (!string.IsNullOrEmpty(webhook.BackendConfig))
+                if (!string.IsNullOrEmpty(webhook.BackendConfig) && !_encryptionService.IsEncrypted(webhook.BackendConfig))
                 {
-                    webhook.BackendConfig = webhook.BackendConfig.EncryptIfNeeded(_encryptionService);
+                    webhook.BackendConfig = _encryptionService.Encrypt(webhook.BackendConfig);
                 }
 
                 // Get the appropriate backend
-                var backend = _backendFactory.GetBackend(webhook);
+                var backend = _backendFactory.GetBackend(webhook.BackendType);
 
                 // Test the connection
-                var result = await backend.TestConnectionAsync();
+                var success = await backend.TestConnectionAsync(webhook);
 
-                return Ok(result);
+                return Ok(new WebhookBackendResult
+                {
+                    Success = success,
+                    Message = success ? "Connection test successful" : "Connection test failed"
+                });
             }
             catch (Exception ex)
             {
                 return Ok(new WebhookBackendResult
                 {
-                    IsSuccess = false,
+                    Success = false,
                     Message = $"Test failed: {ex.Message}"
                 });
             }
