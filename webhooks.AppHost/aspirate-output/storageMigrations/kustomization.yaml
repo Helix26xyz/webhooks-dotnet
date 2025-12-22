@@ -2,8 +2,10 @@ resources:
 - job.yaml
 - service.yaml
 
+# Generate unique suffix for job name based on configmap content
+# When image or config changes, the hash changes, creating a new job
 generatorOptions:
-  disableNameSuffixHash: true
+  disableNameSuffixHash: false
 
 configMapGenerator:
 - name: storagemigrations-env
@@ -16,6 +18,9 @@ configMapGenerator:
     - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
     - OTEL_SERVICE_NAME=storageMigrations
     - ASPNETCORE_URLS=http://+:8080;
+- name: storagemigrations-version
+  literals:
+    - IMAGE=ghcr.io/helix26xyz/webhooks-dotnet-storagemigrations:main
 
 # secretGenerator:
 # - name: storagemigrations-secrets

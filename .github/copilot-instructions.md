@@ -48,6 +48,10 @@ dotnet tool install --global aspirate --version 9.1.0
 ```
 Config in [webhooks.AppHost/aspirate.json](webhooks.AppHost/aspirate.json) specifies `ghcr.io/helix26xyz` registry.
 
+**Database Persistence**: SQL Server uses a StatefulSet with persistent volumes (10Gi default) to retain data across pod recreations. Volume is mounted at `/var/opt/mssql`. See [webhooks.AppHost/aspirate-output/DefaultConnection/README.md](webhooks.AppHost/aspirate-output/DefaultConnection/README.md) for details.
+
+**Migration Jobs**: Storage migrations run as Kubernetes Jobs with hash-based naming to allow Flux reconciliation when image tags change. Jobs auto-cleanup after 5 minutes via `ttlSecondsAfterFinished: 300`. See [webhooks.AppHost/aspirate-output/storageMigrations/README.md](webhooks.AppHost/aspirate-output/storageMigrations/README.md) for details.
+
 ## Project-Specific Conventions
 
 ### Service Discovery
