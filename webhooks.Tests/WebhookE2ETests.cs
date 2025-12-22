@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 using webhooks.ApiService.src;
 using webhooks.SharedModels.models;
 using webhooks.SharedModels.storage;
+using webhooks.SharedModels.backends;
+using webhooks.SharedModels.security;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace webhooks.ApiService.Tests
@@ -20,6 +24,8 @@ namespace webhooks.ApiService.Tests
         private readonly WebhookEventsSubmissionController _submissioncontroller;
         private Webhook _webhook;
         private WebhookEvent _webhookEvent;
+        private readonly Mock<IWebhookBackendFactory> _mockBackendFactory;
+        private readonly Mock<IEncryptionService> _mockEncryptionService;
 
         private Guid _webhookId;
         private Guid _webhookEventId;
@@ -31,9 +37,34 @@ namespace webhooks.ApiService.Tests
                 .Options;
 
             _context = new AppDbContext(options);
-            _webhookcontroller = new WebhooksController(_context);
+            
+            // Setup mock encryption service
+            _mockEncryptionService = new Mock<IEncryptionService>();
+            _mockEncryptionService.Setup(e => e.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
+            _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
+            _mockEncryptionService.Setup(e => e.IsEncrypted(It.IsAny<string>())).Returns(false);
+            
+            _webhookcontroller = new WebhooksController(_context, _mockEncryptionService.Object);
             _eventcontroller = new WebhookEventsController(_context);
-            _submissioncontroller = new WebhookEventsSubmissionController(_context);
+            
+            // Setup mock backend factory
+            _mockBackendFactory = new Mock<IWebhookBackendFactory>();
+            var mockLogger = new Mock<ILogger<WebhookEventsSubmissionController>>();
+            
+            // Setup mock backend to return success
+            var mockBackend = new Mock<IWebhookBackend>();
+            mockBackend.Setup(b => b.BackendType).Returns(WebhookBackendType.Database);
+            mockBackend.Setup(b => b.SendAsync(It.IsAny<Webhook>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new WebhookBackendResult
+                {
+                    Success = true,
+                    Message = "Test backend success"
+                });
+            
+            _mockBackendFactory.Setup(f => f.GetBackend(It.IsAny<WebhookBackendType>()))
+                .Returns(mockBackend.Object);
+            
+            _submissioncontroller = new WebhookEventsSubmissionController(_context, _mockBackendFactory.Object, mockLogger.Object, _mockEncryptionService.Object);
 
             _webhookId = Guid.NewGuid();
             // Seed the database with test data
@@ -44,7 +75,9 @@ namespace webhooks.ApiService.Tests
                 Slug = $"test-webhook{_webhookId}",
                 Owner = $"test-org{_webhookId}",
                 Project = $"test-project{_webhookId}",
-                Status = WebhookStatus.Enabled
+                Status = WebhookStatus.Enabled,
+                BackendType = WebhookBackendType.Database,
+                DeliveryMode = WebhookDeliveryMode.Synchronous
             };
             _context.Webhooks.Add(_webhook);
             _context.SaveChanges();
@@ -63,22 +96,14 @@ namespace webhooks.ApiService.Tests
             
             // Assert
             var webhookEvent = Assert.IsType<WebhookEvent>(_webhookEvent);
-            Assert.Equal(WebhookEventStatus.New, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Pending, webhookEvent.SubStatus);
+            Assert.Equal(WebhookEventStatus.Processed, webhookEvent.Status);
+            Assert.Equal(WebhookEventSubStatus.Success, webhookEvent.SubStatus);
             Assert.Contains("Test payload", webhookEvent.Payload);
 
-            // Act
+            // Since backend processed synchronously, the event is already Processed
+            // ReceiveWebhookEvent should return NoContent since there are no New events
             var result2 = await _eventcontroller.ReceiveWebhookEvent(_webhook.Id);
-            var objectResult2 = result2.Result as ObjectResult;
-            var thisWebhookEvent2 = objectResult2?.Value as WebhookEvent;
-
-            // Assert
-            Assert.Equal(thisWebhookEvent2.Id, _webhookEvent.Id);
-            // Act
-            var result3 = await _eventcontroller.ReceiveWebhookEvent(_webhook.Id);
-
-            var objectResult3 = result3.Result as ObjectResult;
-            Assert.Equal(objectResult3, null);
+            Assert.IsType<NoContentResult>(result2.Result);
         }
 
     }

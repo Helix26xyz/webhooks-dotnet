@@ -72,4 +72,22 @@ public class WebhookApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<WebhookBackendResult> TestBackendConnectionAsync(Webhook webhook, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PostAsJsonAsync("/api/webhooks/test-connection", webhook, cancellationToken);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            return new WebhookBackendResult
+            {
+                IsSuccess = false,
+                Message = $"HTTP {response.StatusCode}: {error}"
+            };
+        }
+        
+        return await response.Content.ReadFromJsonAsync<WebhookBackendResult>(cancellationToken: cancellationToken) 
+               ?? new WebhookBackendResult { IsSuccess = false, Message = "No response from server" };
+    }
 }

@@ -55,6 +55,53 @@
                 <option value="3">Suspended</option>
             </InputSelect>
         </div>
+        
+        <hr />
+        <h5>Backend Configuration</h5>
+        
+        <div class="form-group">
+            <label for="backendType">Backend Type</label>
+            <InputSelect id="backendType" class="form-control" @bind-Value="newWebhook.BackendType">
+                <option value="Database">Database</option>
+                <option value="Kafka">Kafka</option>
+                <option value="RabbitMQ">RabbitMQ</option>
+            </InputSelect>
+        </div>
+        
+        <div class="form-group">
+            <label for="backendConfig">Connection String</label>
+            <InputText id="backendConfig" class="form-control" @bind-Value="newWebhook.BackendConfig" 
+                       placeholder="@GetPlaceholder(newWebhook.BackendType)" />
+            <small class="form-text text-muted">This will be encrypted when saved. Never exposed via API.</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="deliveryMode">Delivery Mode</label>
+            <InputSelect id="deliveryMode" class="form-control" @bind-Value="newWebhook.DeliveryMode">
+                <option value="Synchronous">Synchronous</option>
+                <option value="Asynchronous">Asynchronous</option>
+            </InputSelect>
+        </div>
+        
+        <div class="form-group">
+            <button type="button" class="btn btn-info" @onclick="TestConnection" disabled="@isTestingConnection">
+                @if (isTestingConnection)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <text> Testing...</text>
+                }
+                else
+                {
+                    <span class="bi bi-plug" aria-hidden="true"></span>
+                    <text> Test Connection</text>
+                }
+            </button>
+            @if (!string.IsNullOrEmpty(testConnectionMessage))
+            {
+                <span class="@testConnectionClass ms-2">@testConnectionMessage</span>
+            }
+        </div>
+        
         <button type="submit" class="btn btn-primary">Add Webhook</button>
     </EditForm>
 }
@@ -154,9 +201,12 @@ else
     private List<Webhook> webhooks = new List<Webhook>();
     private Webhook? selectedWebhook;
     private List<WebhookEvent> webhookEvents = new List<WebhookEvent>();
-    private Webhook newWebhook = new Webhook();
+    private Webhook newWebhook = new Webhook { BackendType = "Database", DeliveryMode = "Synchronous" };
     private bool isNewWebhookFormVisible = false;
     private Dictionary<Guid, WebhookStatus> pendingStatusUpdates = new();
+    private bool isTestingConnection = false;
+    private string? testConnectionMessage = null;
+    private string testConnectionClass = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -222,5 +272,49 @@ else
         var baseUrl = await JSRuntime.InvokeAsync<string>("webhookInterop.getLocationOrigin");
         var fullWebhookUrl = $"{baseUrl}/api/wes/{webhook.Owner}/{webhook.Project}/{webhook.Slug}";
         await JSRuntime.InvokeVoidAsync("alert", $"Webhook URL:\n\n{fullWebhookUrl}");
+    }
+
+    private string GetPlaceholder(string backendType)
+    {
+        return backendType switch
+        {
+            "Kafka" => "localhost:9092",
+            "RabbitMQ" => "amqp://guest:guest@localhost:5672/",
+            "Database" => "Leave empty to use default database",
+            _ => "Connection string for backend"
+        };
+    }
+
+    private async Task TestConnection()
+    {
+        isTestingConnection = true;
+        testConnectionMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = await WebhookApi.TestBackendConnectionAsync(newWebhook);
+            
+            if (result.IsSuccess)
+            {
+                testConnectionMessage = $"✓ Connection successful! {result.Message}";
+                testConnectionClass = "text-success";
+            }
+            else
+            {
+                testConnectionMessage = $"✗ Connection failed: {result.Message}";
+                testConnectionClass = "text-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            testConnectionMessage = $"✗ Error: {ex.Message}";
+            testConnectionClass = "text-danger";
+        }
+        finally
+        {
+            isTestingConnection = false;
+            StateHasChanged();
+        }
     }
 }

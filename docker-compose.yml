@@ -18,6 +18,65 @@ services:
             retries: 10
             start_period: 10s
 
+    zookeeper:
+        image: confluentinc/cp-zookeeper:7.6.0
+        hostname: zookeeper
+        container_name: zookeeper
+        environment:
+            ZOOKEEPER_CLIENT_PORT: 2181
+            ZOOKEEPER_TICK_TIME: 2000
+        ports:
+            - "2181:2181"
+        volumes:
+            - zookeeper-data:/var/lib/zookeeper/data
+            - zookeeper-logs:/var/lib/zookeeper/log
+
+    kafka:
+        image: confluentinc/cp-kafka:7.6.0
+        hostname: kafka
+        container_name: kafka
+        depends_on:
+            - zookeeper
+        ports:
+            - "9092:9092"
+            - "9093:9093"
+        environment:
+            KAFKA_BROKER_ID: 1
+            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://localhost:9092
+            KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+            KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+            KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+            KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+        volumes:
+            - kafka-data:/var/lib/kafka/data
+        healthcheck:
+            test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9093 || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 15s
+
+    rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        hostname: rabbitmq
+        container_name: rabbitmq
+        environment:
+            RABBITMQ_DEFAULT_USER: guest
+            RABBITMQ_DEFAULT_PASS: guest
+        ports:
+            - "5672:5672"   # AMQP protocol
+            - "15672:15672" # Management UI
+        volumes:
+            - rabbitmq-data:/var/lib/rabbitmq
+        healthcheck:
+            test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 15s
+
     web:
         image: helix26xyz/webhooks-dotnet/web:latest
         hostname: web
@@ -67,3 +126,7 @@ services:
 
 volumes:
     mssql-data:
+    zookeeper-data:
+    zookeeper-logs:
+    kafka-data:
+    rabbitmq-data:

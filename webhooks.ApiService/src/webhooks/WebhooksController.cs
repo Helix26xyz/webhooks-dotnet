@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using webhooks.SharedModels.models;
 using System.Threading.Tasks;
 using webhooks.SharedModels.storage;
+using webhooks.SharedModels.security;
+using webhooks.SharedModels.backends;
 
 namespace webhooks.ApiService.src
 {
@@ -11,22 +13,27 @@ namespace webhooks.ApiService.src
     public class WebhooksController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IEncryptionService _encryptionService;
+        private readonly IWebhookBackendFactory _backendFactory;
 
-        public WebhooksController(AppDbContext context)
+        public WebhooksController(AppDbContext context, IEncryptionService encryptionService, IWebhookBackendFactory backendFactory)
         {
             _context = context;
+            _encryptionService = encryptionService;
+            _backendFactory = backendFactory;
         }
 
         // GET: api/Webhooks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Webhook>>> GetWebhooks()
+        public async Task<ActionResult<IEnumerable<WebhookDto>>> GetWebhooks()
         {
-            return await _context.Webhooks.ToListAsync();
+            var webhooks = await _context.Webhooks.ToListAsync();
+            return webhooks.Select(w => WebhookDto.FromWebhook(w)).ToList();
         }
 
         // GET: api/Webhooks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Webhook>> GetWebhook(Guid id)
+        public async Task<ActionResult<WebhookDto>> GetWebhook(Guid id)
         {
             var webhook = await _context.Webhooks.FindAsync(id);
 
@@ -35,19 +42,25 @@ namespace webhooks.ApiService.src
                 return NotFound();
             }
 
-            return webhook;
+            return WebhookDto.FromWebhook(webhook);
         }
 
         // POST: api/Webhooks
         [HttpPost]
-        public async Task<ActionResult<Webhook>> PostWebhook(Webhook webhook)
+        public async Task<ActionResult<WebhookDto>> PostWebhook(Webhook webhook)
         {
             try
             {
+                // Encrypt BackendConfig before saving
+                if (!string.IsNullOrEmpty(webhook.BackendConfig))
+                {
+                    webhook.SetBackendConfig(webhook.BackendConfig, _encryptionService);
+                }
+
                 _context.Webhooks.Add(webhook);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetWebhook), new { id = webhook.Id }, webhook);
+                return CreatedAtAction(nameof(GetWebhook), new { id = webhook.Id }, WebhookDto.FromWebhook(webhook));
             }
             catch (Exception ex)
             {
@@ -65,12 +78,28 @@ namespace webhooks.ApiService.src
             }
 
             var existingEntity = await _context.Webhooks.FindAsync(id);
-            if (existingEntity != null)
+            if (existingEntity == null)
             {
-                _context.Entry(existingEntity).State = EntityState.Detached;
+                return NotFound();
             }
 
-            _context.Entry(webhook).State = EntityState.Modified;
+            // Update fields
+            existingEntity.Name = webhook.Name;
+            existingEntity.Slug = webhook.Slug;
+            existingEntity.Url = webhook.Url;
+            existingEntity.CreatedBy = webhook.CreatedBy;
+            existingEntity.Owner = webhook.Owner;
+            existingEntity.Project = webhook.Project;
+            existingEntity.Status = webhook.Status;
+            existingEntity.BackendType = webhook.BackendType;
+            existingEntity.DeliveryMode = webhook.DeliveryMode;
+
+            // Only update BackendConfig if a new value is provided (allows updating config)
+            // User must provide the full config, not partial updates
+            if (!string.IsNullOrEmpty(webhook.BackendConfig))
+            {
+                existingEntity.SetBackendConfig(webhook.BackendConfig, _encryptionService);
+            }
 
             try
             {
@@ -105,6 +134,36 @@ namespace webhooks.ApiService.src
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // POST: api/Webhooks/test-connection
+        [HttpPost("test-connection")]
+        public async Task<ActionResult<WebhookBackendResult>> TestConnection(Webhook webhook)
+        {
+            try
+            {
+                // Encrypt the config before testing (mimics what would be saved)
+                if (!string.IsNullOrEmpty(webhook.BackendConfig))
+                {
+                    webhook.BackendConfig = webhook.BackendConfig.EncryptIfNeeded(_encryptionService);
+                }
+
+                // Get the appropriate backend
+                var backend = _backendFactory.GetBackend(webhook);
+
+                // Test the connection
+                var result = await backend.TestConnectionAsync();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Ok(new WebhookBackendResult
+                {
+                    IsSuccess = false,
+                    Message = $"Test failed: {ex.Message}"
+                });
+            }
         }
 
         private bool WebhookExists(Guid id)

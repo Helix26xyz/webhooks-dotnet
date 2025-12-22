@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using webhooks.ApiService;
 using webhooks.ApiService.src;
 using webhooks.SharedModels.models;
+using webhooks.SharedModels.security;
 using Xunit;
 using webhooks.SharedModels.storage;
 
@@ -18,15 +19,23 @@ namespace webhooks.ApiService.Tests
     {
         private readonly AppDbContext _context;
         private readonly WebhooksController _controller;
+        private readonly Mock<IEncryptionService> _mockEncryptionService;
 
         public WebhooksControllerTests()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
+                .UseInMemoryDatabase(databaseName: $"TestDatabase_{Guid.NewGuid()}")
                 .Options;
 
             _context = new AppDbContext(options);
-            _controller = new WebhooksController(_context);
+            
+            // Setup mock encryption service
+            _mockEncryptionService = new Mock<IEncryptionService>();
+            _mockEncryptionService.Setup(e => e.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
+            _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
+            _mockEncryptionService.Setup(e => e.IsEncrypted(It.IsAny<string>())).Returns(false);
+            
+            _controller = new WebhooksController(_context, _mockEncryptionService.Object);
 
             // Seed the database with test data
             _context.Webhooks.AddRange(new List<Webhook>
@@ -44,8 +53,8 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.GetWebhooks();
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<Webhook>>>(result);
-            var model = Assert.IsAssignableFrom<IEnumerable<Webhook>>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<IEnumerable<WebhookDto>>>(result);
+            var model = Assert.IsAssignableFrom<IEnumerable<WebhookDto>>(actionResult.Value);
             Assert.Equal(2, model.Count());
         }
 
@@ -74,7 +83,7 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.GetWebhook(webhookId);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<Webhook>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookDto>>(result);
             Assert.IsType<NotFoundResult>(actionResult.Result);
         }
 
@@ -88,9 +97,9 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.PostWebhook(webhook);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<Webhook>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookDto>>(result);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var model = Assert.IsAssignableFrom<Webhook>(createdAtActionResult.Value);
+            var model = Assert.IsAssignableFrom<WebhookDto>(createdAtActionResult.Value);
             Assert.Equal(webhook.Id, model.Id);
             Assert.Equal(previousCount + 1, _context.Webhooks.Count());
         }
