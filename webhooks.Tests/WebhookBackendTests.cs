@@ -525,11 +525,5 @@ namespace webhooks.ApiService.Tests
             var backendResult = Assert.IsType<WebhookBackendResult>(okResult.Value);
             Assert.True(backendResult.Success);
         }
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var backendResult = Assert.IsType<WebhookBackendResult>(okResult.Value);
-            Assert.True(backendResult.Success);
-        }
     }
 }
