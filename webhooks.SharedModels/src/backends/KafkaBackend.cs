@@ -95,11 +95,16 @@ namespace webhooks.SharedModels.backends
 
             try
             {
+                // Log the first few characters to help debug encryption issues (without exposing full config)
+                var preview = backendConfig.Length > 10 ? backendConfig.Substring(0, 10) + "..." : backendConfig;
+                _logger.LogDebug("Parsing Kafka config (preview: {Preview}, length: {Length})", preview, backendConfig.Length);
+                
                 return JsonSerializer.Deserialize<KafkaConfig>(backendConfig) ?? new KafkaConfig();
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Error parsing Kafka backend config");
+                _logger.LogError(ex, "Error parsing Kafka backend config. Config preview (first 20 chars): {ConfigPreview}", 
+                    backendConfig.Length > 20 ? backendConfig.Substring(0, 20) + "..." : backendConfig);
                 return new KafkaConfig();
             }
         }
