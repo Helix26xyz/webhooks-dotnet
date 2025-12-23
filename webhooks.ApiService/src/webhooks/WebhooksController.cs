@@ -51,19 +51,9 @@ namespace webhooks.ApiService.src
         {
             try
             {
-                // Validate and encrypt BackendConfig before saving
+                // Encrypt BackendConfig before saving
                 if (!string.IsNullOrEmpty(webhook.BackendConfig))
                 {
-                    // Validate it's valid JSON
-                    try
-                    {
-                        System.Text.Json.JsonDocument.Parse(webhook.BackendConfig);
-                    }
-                    catch (System.Text.Json.JsonException)
-                    {
-                        return BadRequest(GetBackendConfigFormatHelp(webhook.BackendType));
-                    }
-                    
                     webhook.SetBackendConfig(webhook.BackendConfig, _encryptionService);
                 }
 
@@ -108,16 +98,6 @@ namespace webhooks.ApiService.src
             // User must provide the full config, not partial updates
             if (!string.IsNullOrEmpty(webhook.BackendConfig))
             {
-                // Validate it's valid JSON
-                try
-                {
-                    System.Text.Json.JsonDocument.Parse(webhook.BackendConfig);
-                }
-                catch (System.Text.Json.JsonException)
-                {
-                    return BadRequest(GetBackendConfigFormatHelp(webhook.BackendType));
-                }
-                
                 existingEntity.SetBackendConfig(webhook.BackendConfig, _encryptionService);
             }
 
@@ -162,33 +142,17 @@ namespace webhooks.ApiService.src
         {
             try
             {
-                // Validate BackendConfig is valid JSON
+                // Encrypt the config before testing (mimics what would be saved)
                 if (!string.IsNullOrEmpty(webhook.BackendConfig) && !_encryptionService.IsEncrypted(webhook.BackendConfig))
                 {
-                    try
-                    {
-                        System.Text.Json.JsonDocument.Parse(webhook.BackendConfig);
-                    }
-                    catch (System.Text.Json.JsonException)
-                    {
-                        return Ok(new WebhookBackendResult
-                        {
-                            Success = false,
-                            Message = GetBackendConfigFormatHelp(webhook.BackendType)
-                        });
-                    }
-                    
                     webhook.BackendConfig = _encryptionService.Encrypt(webhook.BackendConfig);
                 }
 
                 // Get the appropriate backend
                 var backend = _backendFactory.GetBackend(webhook.BackendType);
 
-                // Decrypt BackendConfig for backend use only
-                var webhookForBackend = webhook.GetWebhookForBackend(_encryptionService);
-
-                // Test the connection using decrypted config
-                var success = await backend.TestConnectionAsync(webhookForBackend);
+                // Test the connection
+                var success = await backend.TestConnectionAsync(webhook);
 
                 return Ok(new WebhookBackendResult
                 {
@@ -204,24 +168,6 @@ namespace webhooks.ApiService.src
                     Message = $"Test failed: {ex.Message}"
                 });
             }
-        }
-
-        private string GetBackendConfigFormatHelp(WebhookBackendType backendType)
-        {
-            return backendType switch
-            {
-                WebhookBackendType.Kafka => 
-                    "Invalid BackendConfig format. Kafka requires JSON format: {\"BootstrapServers\":\"host:port\",\"Topic\":\"topic-name\"}",
-                WebhookBackendType.RabbitMQ => 
-                    "Invalid BackendConfig format. RabbitMQ requires JSON format: {\"HostName\":\"host\",\"QueueName\":\"queue\",\"UserName\":\"user\",\"Password\":\"pass\"}",
-                WebhookBackendType.AzureServiceBus => 
-                    "Invalid BackendConfig format. Azure Service Bus requires JSON format: {\"ConnectionString\":\"...\",\"QueueName\":\"queue\"}",
-                WebhookBackendType.AWSSQS => 
-                    "Invalid BackendConfig format. AWS SQS requires JSON format: {\"QueueUrl\":\"...\",\"Region\":\"us-east-1\"}",
-                WebhookBackendType.Redis => 
-                    "Invalid BackendConfig format. Redis requires JSON format: {\"ConnectionString\":\"...\",\"Key\":\"key\"}",
-                _ => "Invalid BackendConfig format. Must be valid JSON object."
-            };
         }
 
         private bool WebhookExists(Guid id)
