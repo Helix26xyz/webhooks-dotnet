@@ -22,9 +22,17 @@ namespace webhooks.SharedModels.backends
 
         public async Task<WebhookBackendResult> SendAsync(Webhook webhook, string payload, Guid webhookEventId, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation(
+                "KafkaBackend.SendAsync called for webhook {WebhookId} ({WebhookName}), event {WebhookEventId}",
+                webhook.Id, webhook.Name, webhookEventId);
+            
             try
             {
                 var config = ParseConfig(webhook.BackendConfig);
+                
+                _logger.LogInformation(
+                    "Kafka config parsed: BootstrapServers={BootstrapServers}, Topic={Topic}",
+                    config.BootstrapServers ?? "(null)", config.Topic ?? "(null)");
                 
                 if (string.IsNullOrEmpty(config.BootstrapServers))
                 {
@@ -35,6 +43,10 @@ namespace webhooks.SharedModels.backends
                 {
                     throw new InvalidOperationException("Kafka Topic not configured");
                 }
+
+                _logger.LogInformation(
+                    "Creating Kafka producer for {BootstrapServers}...",
+                    config.BootstrapServers);
 
                 // Create Kafka producer configuration
                 var producerConfig = new ProducerConfig

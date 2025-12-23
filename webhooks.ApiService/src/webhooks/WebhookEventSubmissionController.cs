@@ -65,6 +65,10 @@ namespace webhooks.ApiService.src
         {
             try
             {
+                _logger.LogInformation(
+                    "Received webhook event for {Owner}/{Project}/{Slug}",
+                    org, project, webhookSlug);
+                
                 var webhook = await _context.Webhooks.FirstOrDefaultAsync(w => w.Slug == webhookSlug &&
                     w.Owner == org &&
                     w.Project == project &&
@@ -73,8 +77,15 @@ namespace webhooks.ApiService.src
                 
                 if (webhook == null)
                 {
+                    _logger.LogWarning(
+                        "Webhook not found or disabled: {Owner}/{Project}/{Slug}",
+                        org, project, webhookSlug);
                     return NotFound();
                 }
+
+                _logger.LogInformation(
+                    "Found webhook {WebhookId} ({WebhookName}), backend type: {BackendType}, delivery mode: {DeliveryMode}",
+                    webhook.Id, webhook.Name, webhook.BackendType, webhook.DeliveryMode);
 
                 // Update last received timestamp
                 webhook.LastReceivedAt = DateTime.UtcNow;
@@ -98,6 +109,10 @@ namespace webhooks.ApiService.src
                 {
                     var backend = _backendFactory.GetBackend(webhook.BackendType);
                     
+                    _logger.LogInformation(
+                        "Sending webhook event {WebhookEventId} to {BackendType} backend for webhook {WebhookId} ({WebhookName})",
+                        webhookEvent.Id, webhook.BackendType, webhook.Id, webhook.Name);
+                    
                     // Decrypt BackendConfig for backend use only
                     var webhookForBackend = webhook.GetWebhookForBackend(_encryptionService);
                     
@@ -107,6 +122,10 @@ namespace webhooks.ApiService.src
                     {
                         // Wait for backend to process (use decrypted webhook)
                         backendResult = await backend.SendAsync(webhookForBackend, serializedPayload, webhookEvent.Id);
+                        
+                        _logger.LogInformation(
+                            "Backend {BackendType} returned {Success} for webhook event {WebhookEventId}: {Message}",
+                            webhook.BackendType, backendResult.Success, webhookEvent.Id, backendResult.Message);
                         
                         // Update webhook event with backend result
                         if (backendResult.Success)
