@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using webhooks.ApiService.src;
+using webhooks.ApiService.src.filters;
 using Microsoft.OpenApi.Models; // Add this using directive
 using Swashbuckle.AspNetCore.SwaggerUI; // Add this using directive
 using Swashbuckle.AspNetCore.SwaggerGen; // Add this using directive
@@ -34,7 +35,16 @@ builder.Services.AddSingleton<IWebhookBackendFactory, WebhookBackendFactory>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddControllers();
+// Configure JSON serialization to use string enum values by default
+// Use header X-ENUMS-INT=1 to get integer values instead
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<EnumSerializationFilter>();
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 var app = builder.Build();
 
