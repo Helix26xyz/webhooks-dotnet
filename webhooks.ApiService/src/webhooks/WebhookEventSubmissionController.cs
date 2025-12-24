@@ -133,7 +133,7 @@ namespace webhooks.ApiService.src
 
         // GET: api/wes/:org/:project/:webhookSlug
         [HttpGet("{org}/{project}/{webhookSlug}")]
-        public async Task<ActionResult<WebhookEvent>> GetWebhookEvent(String org, String project, String webhookSlug)
+        public async Task<ActionResult<WebhookEventDto>> GetWebhookEvent(String org, String project, String webhookSlug)
         {
             try
             {
@@ -171,7 +171,7 @@ namespace webhooks.ApiService.src
                 var serializedPayload = System.Text.Json.JsonSerializer.Serialize(queryParams);
                 var webhookEvent = await ProcessWebhookEventAsync(webhook, serializedPayload);
 
-                return CreatedAtAction(nameof(GetWebhookEvent), new { id = webhookEvent.Id }, webhookEvent);
+                return CreatedAtAction(nameof(GetWebhookEvent), new { id = webhookEvent.Id }, WebhookEventDto.FromWebhookEvent(webhookEvent));
             }
             catch (Exception ex)
             {
@@ -182,7 +182,7 @@ namespace webhooks.ApiService.src
 
         // POST: api/wes/:org/:project/:webhookSlug
         [HttpPost("{org}/{project}/{webhookSlug}")]
-        public async Task<ActionResult<WebhookEvent>> PostWebhookEvent(String org, String project, String webhookSlug, [FromBody] object payload)
+        public async Task<ActionResult<WebhookEventDto>> PostWebhookEvent(String org, String project, String webhookSlug, [FromBody] object payload)
         {
             try
             {
@@ -207,7 +207,7 @@ namespace webhooks.ApiService.src
                 var serializedPayload = System.Text.Json.JsonSerializer.Serialize(payload);
                 var webhookEvent = await ProcessWebhookEventAsync(webhook, serializedPayload);
 
-                return CreatedAtAction(nameof(PostWebhookEvent), new { id = webhookEvent.Id }, webhookEvent);
+                return CreatedAtAction(nameof(PostWebhookEvent), new { id = webhookEvent.Id }, WebhookEventDto.FromWebhookEvent(webhookEvent));
             }
             catch (Exception ex)
             {
