@@ -22,6 +22,7 @@ namespace webhooks.SharedModels.backends
 
         public async Task<WebhookBackendResult> SendAsync(Webhook webhook, string payload, Guid webhookEventId, CancellationToken cancellationToken = default)
         {
+            Console.WriteLine($"[KAFKA] SendAsync called for webhook {webhook.Id} ({webhook.Name}), event {webhookEventId}");
             _logger.LogInformation(
                 "KafkaBackend.SendAsync called for webhook {WebhookId} ({WebhookName}), event {WebhookEventId}",
                 webhook.Id, webhook.Name, webhookEventId);
@@ -30,6 +31,7 @@ namespace webhooks.SharedModels.backends
             {
                 var config = ParseConfig(webhook.BackendConfig);
                 
+                Console.WriteLine($"[KAFKA] Config: BootstrapServers={config.BootstrapServers}, Topic={config.Topic}");
                 _logger.LogInformation(
                     "Kafka config parsed: BootstrapServers={BootstrapServers}, Topic={Topic}",
                     config.BootstrapServers ?? "(null)", config.Topic ?? "(null)");
@@ -47,6 +49,8 @@ namespace webhooks.SharedModels.backends
                 _logger.LogInformation(
                     "Creating Kafka producer for {BootstrapServers}...",
                     config.BootstrapServers);
+                
+                Console.WriteLine($"[KAFKA] Creating producer for {config.BootstrapServers}");
 
                 // Create Kafka producer configuration
                 var producerConfig = new ProducerConfig
@@ -55,11 +59,14 @@ namespace webhooks.SharedModels.backends
                     ClientId = $"webhooks-{webhook.Id}",
                     // Reliability settings
                     Acks = Acks.Leader,
-                    MessageTimeoutMs = 10000,
-                    RequestTimeoutMs = 5000,
+                    MessageTimeoutMs = 30000, // Increased to 30 seconds for remote Kafka
+                    RequestTimeoutMs = 15000, // Increased to 15 seconds
+                    SocketTimeoutMs = 15000,  // Added socket timeout
                     // Retry settings
                     MessageSendMaxRetries = 3,
-                    RetryBackoffMs = 100
+                    RetryBackoffMs = 500,
+                    // Debug settings
+                    Debug = "broker,topic,msg"
                 };
 
                 // Build the message with metadata
@@ -77,10 +84,12 @@ namespace webhooks.SharedModels.backends
                 };
 
                 // Send to Kafka
+                Console.WriteLine($"[KAFKA] Sending message to topic {config.Topic}...");
                 using var producer = new ProducerBuilder<string, string>(producerConfig).Build();
                 
                 var deliveryResult = await producer.ProduceAsync(config.Topic, kafkaMessage, cancellationToken);
                 
+                Console.WriteLine($"[KAFKA] Message delivered! Partition: {deliveryResult.Partition.Value}, Offset: {deliveryResult.Offset.Value}");
                 _logger.LogInformation(
                     "Successfully sent webhook event {WebhookEventId} to Kafka topic {Topic} at {BootstrapServers}, partition {Partition}, offset {Offset}",
                     webhookEventId, config.Topic, config.BootstrapServers, deliveryResult.Partition.Value, deliveryResult.Offset.Value);
@@ -131,7 +140,7 @@ namespace webhooks.SharedModels.backends
                 var adminConfig = new AdminClientConfig
                 {
                     BootstrapServers = config.BootstrapServers,
-                    SocketTimeoutMs = 5000
+                    SocketTimeoutMs = 15000 // Increased to 15 seconds for remote Kafka
                 };
 
                 using var adminClient = new AdminClientBuilder(adminConfig).Build();

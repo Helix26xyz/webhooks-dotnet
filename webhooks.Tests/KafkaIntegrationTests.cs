@@ -21,6 +21,54 @@ namespace webhooks.ApiService.Tests
     {
         private const string KafkaBootstrapServers = "localhost:9092";
         private const string TestTopic = "webhooks-integration-test";
+        
+        [Fact]
+        public async Task DirectKafkaProducer_SendToRemoteServer_Success()
+        {
+            // Arrange - Direct Kafka producer test to remote VM
+            var config = new Confluent.Kafka.ProducerConfig
+            {
+                BootstrapServers = "10.10.100.93:9092",
+                ClientId = "direct-test-producer",
+                Acks = Confluent.Kafka.Acks.Leader,
+                MessageTimeoutMs = 30000,
+                RequestTimeoutMs = 15000,
+                SocketTimeoutMs = 15000,
+                MessageSendMaxRetries = 3,
+                RetryBackoffMs = 500
+            };
+
+            var testPayload = new
+            {
+                test = "direct-kafka-test",
+                timestamp = DateTime.UtcNow.ToString("o"),
+                message = "Testing direct Kafka connectivity from .NET"
+            };
+
+            var payloadJson = System.Text.Json.JsonSerializer.Serialize(testPayload);
+
+            // Act
+            using var producer = new Confluent.Kafka.ProducerBuilder<string, string>(config).Build();
+            
+            var message = new Confluent.Kafka.Message<string, string>
+            {
+                Key = Guid.NewGuid().ToString(),
+                Value = payloadJson
+            };
+
+            var deliveryResult = await producer.ProduceAsync("test-topic", message);
+
+            // Assert
+            Assert.NotNull(deliveryResult);
+            Assert.Equal(Confluent.Kafka.PersistenceStatus.Persisted, deliveryResult.Status);
+            
+            // Log results
+            Console.WriteLine($"✅ Message sent successfully!");
+            Console.WriteLine($"   Topic: {deliveryResult.Topic}");
+            Console.WriteLine($"   Partition: {deliveryResult.Partition.Value}");
+            Console.WriteLine($"   Offset: {deliveryResult.Offset.Value}");
+            Console.WriteLine($"   Timestamp: {deliveryResult.Timestamp.UtcDateTime}");
+        }
 
         [Fact(Skip = "Integration test - requires Kafka running at localhost:9092")]
         public async Task KafkaBackend_SendAsync_ActuallySendsToKafka()
