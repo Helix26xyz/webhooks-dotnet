@@ -51,6 +51,20 @@ namespace webhooks.ApiService.src
         {
             try
             {
+                // Check for duplicate owner/project/slug combination
+                var existingWebhook = await _context.Webhooks.FirstOrDefaultAsync(w => 
+                    w.Owner == webhook.Owner && 
+                    w.Project == webhook.Project && 
+                    w.Slug == webhook.Slug);
+                
+                if (existingWebhook != null)
+                {
+                    return Conflict(new { 
+                        error = "A webhook with this owner, project, and slug already exists",
+                        existingWebhookId = existingWebhook.Id 
+                    });
+                }
+
                 // Encrypt BackendConfig before saving
                 if (!string.IsNullOrEmpty(webhook.BackendConfig))
                 {
