@@ -34,6 +34,12 @@ namespace webhooks.ApiService.src
         /// </summary>
         private async Task<WebhookEvent> ProcessWebhookEventAsync(Webhook webhook, string serializedPayload)
         {
+            // Validate webhook status - only Enabled webhooks can receive events
+            if (webhook.Status != WebhookStatus.Enabled)
+            {
+                throw new InvalidOperationException($"Webhook is {webhook.Status.ToString().ToLower()} and cannot receive events");
+            }
+
             // Update last received timestamp
             webhook.LastReceivedAt = DateTime.UtcNow;
 
@@ -140,8 +146,7 @@ namespace webhooks.ApiService.src
             return await _context.Webhooks.FirstOrDefaultAsync(w => 
                 w.Slug == webhookSlug &&
                 w.Owner == org &&
-                w.Project == project &&
-                w.Status != WebhookStatus.Disabled
+                w.Project == project
             );
         }
 
