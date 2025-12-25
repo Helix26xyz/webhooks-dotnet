@@ -5,14 +5,19 @@ metadata:
   name: storagemigrations
   labels:
     app: storagemigrations
+  annotations:
+    # Force Flux to recreate this job on each reconciliation
+    kustomize.toolkit.fluxcd.io/force: "enabled"
 spec:
+  # Clean up completed jobs after 5 minutes
+  ttlSecondsAfterFinished: 300
   backoffLimit: 0 # Do not retry the job if it fails
   template:
     metadata:
       labels:
         app: storagemigrations
     spec:
-      restartPolicy: OnFailure # Restart only if the container fails
+      restartPolicy: Never
       containers:
       - name: storagemigrations
         image: ghcr.io/helix26xyz/webhooks-dotnet-storagemigrations:main
@@ -25,6 +30,8 @@ spec:
         envFrom:
         - configMapRef:
             name: storagemigrations-env
+        - configMapRef:
+            name: storagemigrations-version
         - secretRef:
             name: storagemigrations-secrets
       terminationGracePeriodSeconds: 180

@@ -1,4 +1,5 @@
 using webhooks.SharedModels.models;
+using webhooks.SharedModels.backends;
 using System.Net.Http.Json;
 namespace webhooks.SharedModels.clients;
 
@@ -71,5 +72,23 @@ public class WebhookApiClient(HttpClient httpClient)
         var response = await httpClient.PutAsJsonAsync($"/api/webhooks/{webhook.Id}", webhook, cancellationToken);
         response.EnsureSuccessStatusCode();
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<WebhookBackendResult> TestBackendConnectionAsync(Webhook webhook, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PostAsJsonAsync("/api/webhooks/test-connection", webhook, cancellationToken);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            return new WebhookBackendResult
+            {
+                Success = false,
+                Message = $"HTTP {response.StatusCode}: {error}"
+            };
+        }
+        
+        return await response.Content.ReadFromJsonAsync<WebhookBackendResult>(cancellationToken: cancellationToken) 
+               ?? new WebhookBackendResult { Success = false, Message = "No response from server" };
     }
 }

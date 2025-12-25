@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-
 var sql = builder.AddSqlServer("DefaultConnection");
 
 var db = sql.AddDatabase("webhooks");
