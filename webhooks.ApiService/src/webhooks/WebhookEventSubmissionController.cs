@@ -70,12 +70,16 @@ namespace webhooks.ApiService.src
                         "Backend {BackendType} returned {Success} for webhook event {WebhookEventId}: {Message}",
                         webhook.BackendType, backendResult.Success, webhookEvent.Id, backendResult.Message);
                     
-                    // Update webhook event with backend result
-                    webhookEvent.Status = WebhookEventStatus.Processed;
-                    webhookEvent.SubStatus = backendResult.Success ? WebhookEventSubStatus.Success : WebhookEventSubStatus.Failed;
-                    webhookEvent.StatusResultText = backendResult.Message;
-                    
-                    await _context.SaveChangesAsync();
+                    // For Database backend, keep status as New (event awaits consumer retrieval via /receive endpoint)
+                    // For other backends (Kafka, etc.), mark as Processed since message was delivered
+                    if (webhook.BackendType != WebhookBackendType.Database)
+                    {
+                        webhookEvent.Status = WebhookEventStatus.Processed;
+                        webhookEvent.SubStatus = backendResult.Success ? WebhookEventSubStatus.Success : WebhookEventSubStatus.Failed;
+                        webhookEvent.StatusResultText = backendResult.Message;
+                        
+                        await _context.SaveChangesAsync();
+                    }
                 }
                 else
                 {
@@ -86,17 +90,21 @@ namespace webhooks.ApiService.src
                         {
                             var result = await backend.SendAsync(webhookForBackend, serializedPayload, webhookEvent.Id);
                             
-                            // Update event status in background
-                            using var scope = HttpContext.RequestServices.CreateScope();
-                            var bgContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                            var bgEvent = await bgContext.WebhookEvents.FindAsync(webhookEvent.Id);
-                            
-                            if (bgEvent != null)
+                            // For Database backend, keep status as New (event awaits consumer retrieval)
+                            // For other backends, update event status in background
+                            if (webhookForBackend.BackendType != WebhookBackendType.Database)
                             {
-                                bgEvent.Status = WebhookEventStatus.Processed;
-                                bgEvent.SubStatus = result.Success ? WebhookEventSubStatus.Success : WebhookEventSubStatus.Failed;
-                                bgEvent.StatusResultText = result.Message;
-                                await bgContext.SaveChangesAsync();
+                                using var scope = HttpContext.RequestServices.CreateScope();
+                                var bgContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                                var bgEvent = await bgContext.WebhookEvents.FindAsync(webhookEvent.Id);
+                                
+                                if (bgEvent != null)
+                                {
+                                    bgEvent.Status = WebhookEventStatus.Processed;
+                                    bgEvent.SubStatus = result.Success ? WebhookEventSubStatus.Success : WebhookEventSubStatus.Failed;
+                                    bgEvent.StatusResultText = result.Message;
+                                    await bgContext.SaveChangesAsync();
+                                }
                             }
                         }
                         catch (Exception bgEx)
@@ -109,10 +117,16 @@ namespace webhooks.ApiService.src
             catch (Exception backendEx)
             {
                 _logger.LogError(backendEx, "Backend processing failed for webhook event {WebhookEventId}", webhookEvent.Id);
-                webhookEvent.Status = WebhookEventStatus.Processed;
-                webhookEvent.SubStatus = WebhookEventSubStatus.Failed;
-                webhookEvent.StatusResultText = $"Backend error: {backendEx.Message}";
-                await _context.SaveChangesAsync();
+                
+                // For Database backend, keep status as New even on error (consumer can retry)
+                // For other backends, mark as Processed/Failed
+                if (webhook.BackendType != WebhookBackendType.Database)
+                {
+                    webhookEvent.Status = WebhookEventStatus.Processed;
+                    webhookEvent.SubStatus = WebhookEventSubStatus.Failed;
+                    webhookEvent.StatusResultText = $"Backend error: {backendEx.Message}";
+                    await _context.SaveChangesAsync();
+                }
             }
 
             return webhookEvent;

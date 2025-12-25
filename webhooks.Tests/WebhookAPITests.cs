@@ -48,8 +48,8 @@ namespace webhooks.ApiService.Tests
             // Seed the database with test data
             _context.Webhooks.AddRange(new List<Webhook>
                 {
-                    new Webhook { Id = Guid.NewGuid(), Name = "Webhook1" },
-                    new Webhook { Id = Guid.NewGuid(), Name = "Webhook2" }
+                    new Webhook { Id = Guid.NewGuid(), Name = "Webhook1", Owner = "org1", Project = "proj1", Slug = "webhook1" },
+                    new Webhook { Id = Guid.NewGuid(), Name = "Webhook2", Owner = "org2", Project = "proj2", Slug = "webhook2" }
                 });
             _context.SaveChanges();
         }
@@ -100,7 +100,13 @@ namespace webhooks.ApiService.Tests
         public async Task PostWebhook_CreatesWebhook()
         {
             // Arrange
-            var webhook = new Webhook { Id = Guid.NewGuid(), Name = "Webhook3" };
+            var webhook = new Webhook { 
+                Id = Guid.NewGuid(), 
+                Name = "Webhook3",
+                Owner = "test-owner",
+                Project = "test-project",
+                Slug = "webhook3-slug"
+            };
             var previousCount = _context.Webhooks.Count();
             // Act
             var result = await _controller.PostWebhook(webhook);

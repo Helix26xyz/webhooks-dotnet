@@ -156,6 +156,11 @@ namespace webhooks.SharedModels.backends
                 
                 return true;
             }
+            catch (InvalidOperationException)
+            {
+                // Let validation errors bubble up to controller for better error messages
+                throw;
+            }
             catch (KafkaException ex)
             {
                 _logger.LogError(ex, "Kafka connection test failed: {ErrorReason}", ex.Error.Reason);
@@ -172,7 +177,7 @@ namespace webhooks.SharedModels.backends
         {
             if (string.IsNullOrEmpty(backendConfig))
             {
-                return new KafkaConfig();
+                throw new InvalidOperationException("Invalid BackendConfig format. Expected JSON with BootstrapServers and Topic properties.");
             }
 
             try
@@ -181,13 +186,18 @@ namespace webhooks.SharedModels.backends
                 var preview = backendConfig.Length > 10 ? backendConfig.Substring(0, 10) + "..." : backendConfig;
                 _logger.LogDebug("Parsing Kafka config (preview: {Preview}, length: {Length})", preview, backendConfig.Length);
                 
-                return JsonSerializer.Deserialize<KafkaConfig>(backendConfig) ?? new KafkaConfig();
+                var config = JsonSerializer.Deserialize<KafkaConfig>(backendConfig);
+                if (config == null)
+                {
+                    throw new InvalidOperationException("Invalid BackendConfig format. Expected JSON with BootstrapServers and Topic properties.");
+                }
+                return config;
             }
             catch (JsonException ex)
             {
                 _logger.LogError(ex, "Error parsing Kafka backend config. Config preview (first 20 chars): {ConfigPreview}", 
                     backendConfig.Length > 20 ? backendConfig.Substring(0, 20) + "..." : backendConfig);
-                return new KafkaConfig();
+                throw new InvalidOperationException($"Invalid BackendConfig format. Expected JSON with BootstrapServers and Topic properties. Error: {ex.Message}", ex);
             }
         }
 

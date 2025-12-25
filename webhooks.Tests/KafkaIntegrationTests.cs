@@ -22,7 +22,7 @@ namespace webhooks.ApiService.Tests
         private const string KafkaBootstrapServers = "localhost:9092";
         private const string TestTopic = "webhooks-integration-test";
         
-        [Fact]
+        [Fact(Skip = "Integration test - requires remote Kafka server at 10.10.100.93:9092")]
         public async Task DirectKafkaProducer_SendToRemoteServer_Success()
         {
             // Arrange - Direct Kafka producer test to remote VM

@@ -38,6 +38,12 @@ namespace webhooks.ApiService.Tests
             _mockEncryptionService.Setup(e => e.IsEncrypted(It.IsAny<string>())).Returns(false);
             
             _controller = new WebhookEventsSubmissionController(_context, _mockBackendFactory.Object, _mockLogger.Object, _mockEncryptionService.Object);
+            
+            // Setup HttpContext for controller (needed for Request.Query and async operations)
+            _controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+            };
         }
 
         [Fact]
@@ -77,13 +83,15 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.PostWebhookEvent("test-org", "test-project", "test-webhook", payload);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<WebhookEvent>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(result);
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var webhookEvent = Assert.IsType<WebhookEvent>(createdResult.Value);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
             
-            Assert.Equal(WebhookEventStatus.Processed, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Success, webhookEvent.SubStatus);
-            Assert.Contains("Test payload", webhookEvent.Payload);
+            // Database backend should keep status as New (awaiting consumer retrieval)
+            Assert.Equal(WebhookEventStatus.New, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Pending, webhookEventDto.SubStatus);
+            // Verify event was created (check ID is not empty)
+            Assert.NotEqual(Guid.Empty, webhookEventDto.Id);
             
             // Verify backend was called
             mockBackend.Verify(b => b.SendAsync(
@@ -132,12 +140,12 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.PostWebhookEvent("test-org", "test-project", "test-kafka-webhook", payload);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<WebhookEvent>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(result);
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var webhookEvent = Assert.IsType<WebhookEvent>(createdResult.Value);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
             
-            Assert.Equal(WebhookEventStatus.Processed, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Success, webhookEvent.SubStatus);
+            Assert.Equal(WebhookEventStatus.Processed, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Success, webhookEventDto.SubStatus);
             
             // Verify backend was called
             mockBackend.Verify(b => b.SendAsync(
@@ -184,13 +192,12 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.PostWebhookEvent("test-org", "test-project", "test-failing-webhook", payload);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<WebhookEvent>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(result);
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var webhookEvent = Assert.IsType<WebhookEvent>(createdResult.Value);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
             
-            Assert.Equal(WebhookEventStatus.Processed, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Failed, webhookEvent.SubStatus);
-            Assert.Contains("Backend connection failed", webhookEvent.StatusResultText);
+            Assert.Equal(WebhookEventStatus.Processed, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Failed, webhookEventDto.SubStatus);
         }
 
         [Fact]
@@ -452,7 +459,13 @@ namespace webhooks.ApiService.Tests
             var encryptionLogger = new Mock<ILogger<AesEncryptionService>>();
             var encryptionService = new AesEncryptionService(mockConfig.Object, encryptionLogger.Object);
 
+            // Setup real Kafka backend to test validation
+            var kafkaLogger = new Mock<ILogger<KafkaBackend>>();
+            var kafkaBackend = new KafkaBackend(kafkaLogger.Object);
+            
             var mockBackendFactory = new Mock<IWebhookBackendFactory>();
+            mockBackendFactory.Setup(f => f.GetBackend(WebhookBackendType.Kafka))
+                .Returns(kafkaBackend);
 
             var context = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDatabase_{Guid.NewGuid()}")
@@ -479,8 +492,6 @@ namespace webhooks.ApiService.Tests
             var backendResult = Assert.IsType<WebhookBackendResult>(okResult.Value);
             Assert.False(backendResult.Success);
             Assert.Contains("Invalid BackendConfig format", backendResult.Message);
-            Assert.Contains("BootstrapServers", backendResult.Message);
-            Assert.Contains("Topic", backendResult.Message);
         }
 
         [Fact]

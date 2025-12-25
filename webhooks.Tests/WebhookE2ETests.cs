@@ -65,6 +65,12 @@ namespace webhooks.ApiService.Tests
             _webhookcontroller = new WebhooksController(_context, _mockEncryptionService.Object, _mockBackendFactory.Object);
             _eventcontroller = new WebhookEventsController(_context);
             _submissioncontroller = new WebhookEventsSubmissionController(_context, _mockBackendFactory.Object, mockLogger.Object, _mockEncryptionService.Object);
+            
+            // Setup HttpContext for submission controller (needed for Request.Query)
+            _submissioncontroller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+            };
 
             _webhookId = Guid.NewGuid();
             // Seed the database with test data
@@ -84,26 +90,94 @@ namespace webhooks.ApiService.Tests
         }
 
         [Fact]
-        public async Task PostWebhookEvent_CreatesAndReturnsWebhookEvent()
+        public async Task DatabaseBackend_FullWorkflow_SubmitReceiveAndProcess()
         {
             // Arrange
             var payload = new { message = "Test payload" };
 
-            // Act
-            var result = await _submissioncontroller.PostWebhookEvent(_webhook.Owner, _webhook.Project, _webhook.Slug, payload);
-            var objectResult = result.Result as ObjectResult;
-            _webhookEvent = objectResult?.Value as WebhookEvent;
+            // Act 1: Submit webhook event
+            var submitResult = await _submissioncontroller.PostWebhookEvent(_webhook.Owner, _webhook.Project, _webhook.Slug, payload);
             
-            // Assert
-            var webhookEvent = Assert.IsType<WebhookEvent>(_webhookEvent);
-            Assert.Equal(WebhookEventStatus.Processed, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Success, webhookEvent.SubStatus);
-            Assert.Contains("Test payload", webhookEvent.Payload);
+            // Assert 1: Event should be created with New status (awaiting consumer retrieval)
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(submitResult);
+            var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
+            Assert.Equal(WebhookEventStatus.New, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Pending, webhookEventDto.SubStatus);
 
-            // Since backend processed synchronously, the event is already Processed
-            // ReceiveWebhookEvent should return NoContent since there are no New events
-            var result2 = await _eventcontroller.ReceiveWebhookEvent(_webhook.Id);
-            Assert.IsType<NoContentResult>(result2.Result);
+            // Act 2: Consumer retrieves the event via /receive endpoint
+            var receiveResult = await _eventcontroller.ReceiveWebhookEvent(_webhook.Id);
+            
+            // Assert 2: Event should be returned and marked as Received
+            var receiveOkResult = Assert.IsType<OkObjectResult>(receiveResult.Result);
+            var receivedEvent = Assert.IsType<WebhookEvent>(receiveOkResult.Value);
+            Assert.Equal(WebhookEventStatus.Received, receivedEvent.Status);
+            Assert.Contains("Test payload", receivedEvent.Payload);
+
+            // Act 3: Consumer processes and returns result
+            var returnResult = await _eventcontroller.ReturnWebhookEvent(receivedEvent.Id, new WebhookEventWorkResponse
+            {
+                Status = WebhookEventSubStatus.Success,
+                ResultText = "Processed successfully"
+            });
+            
+            // Assert 3: Event should be marked as Processed
+            var returnOkResult = Assert.IsType<OkObjectResult>(returnResult.Result);
+            var processedEvent = Assert.IsType<WebhookEvent>(returnOkResult.Value);
+            Assert.Equal(WebhookEventStatus.Processed, processedEvent.Status);
+            Assert.Equal(WebhookEventSubStatus.Success, processedEvent.SubStatus);
+
+            // Act 4: Try to receive again - should get NoContent since no more New events
+            var receiveResult2 = await _eventcontroller.ReceiveWebhookEvent(_webhook.Id);
+            Assert.IsType<NoContentResult>(receiveResult2.Result);
+        }
+
+        [Fact]
+        public async Task KafkaBackend_MarksEventAsProcessedImmediately()
+        {
+            // Arrange - Create a Kafka webhook
+            var kafkaWebhook = new Webhook
+            {
+                Id = Guid.NewGuid(),
+                Name = "KafkaTestWebhook",
+                Slug = "kafka-test-webhook",
+                Owner = "kafka-org",
+                Project = "kafka-project",
+                Status = WebhookStatus.Enabled,
+                BackendType = WebhookBackendType.Kafka,
+                DeliveryMode = WebhookDeliveryMode.Synchronous,
+                BackendConfig = "{\"BootstrapServers\":\"localhost:9092\",\"Topic\":\"test-topic\"}"
+            };
+            _context.Webhooks.Add(kafkaWebhook);
+            _context.SaveChanges();
+
+            // Setup Kafka backend mock
+            var mockKafkaBackend = new Mock<IWebhookBackend>();
+            mockKafkaBackend.Setup(b => b.BackendType).Returns(WebhookBackendType.Kafka);
+            mockKafkaBackend.Setup(b => b.SendAsync(It.IsAny<Webhook>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new WebhookBackendResult
+                {
+                    Success = true,
+                    Message = "Sent to Kafka"
+                });
+            _mockBackendFactory.Setup(f => f.GetBackend(WebhookBackendType.Kafka))
+                .Returns(mockKafkaBackend.Object);
+
+            var payload = new { message = "Kafka test payload" };
+
+            // Act: Submit webhook event
+            var submitResult = await _submissioncontroller.PostWebhookEvent(kafkaWebhook.Owner, kafkaWebhook.Project, kafkaWebhook.Slug, payload);
+            
+            // Assert 1: Event should be immediately marked as Processed (not awaiting consumer retrieval)
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(submitResult);
+            var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
+            Assert.Equal(WebhookEventStatus.Processed, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Success, webhookEventDto.SubStatus);
+
+            // Assert 2: Receive endpoint should return NoContent (no events awaiting retrieval)
+            var receiveResult = await _eventcontroller.ReceiveWebhookEvent(kafkaWebhook.Id);
+            Assert.IsType<NoContentResult>(receiveResult.Result);
         }
 
     }

@@ -55,6 +55,12 @@ namespace webhooks.ApiService.Tests
                 .Returns(mockBackend.Object);
             
             _controller = new WebhookEventsSubmissionController(_context, _mockBackendFactory.Object, _mockLogger.Object, _mockEncryptionService.Object);
+            
+            // Setup HttpContext for controller (needed for Request.Query)
+            _controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+            };
 
             // Seed the database with test data
             var webhook = new Webhook
@@ -79,11 +85,11 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.GetWebhookEvent("test-org", "test-project", "test-webhook");
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<WebhookEvent>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(result);
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var webhookEvent = Assert.IsType<WebhookEvent>(createdResult.Value);
-            Assert.Equal(WebhookEventStatus.New, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Pending, webhookEvent.SubStatus);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
+            Assert.Equal(WebhookEventStatus.New, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Pending, webhookEventDto.SubStatus);
         }
 
         [Fact]
@@ -106,12 +112,14 @@ namespace webhooks.ApiService.Tests
             var result = await _controller.PostWebhookEvent("test-org", "test-project", "test-webhook", payload);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<WebhookEvent>>(result);
+            var actionResult = Assert.IsType<ActionResult<WebhookEventDto>>(result);
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var webhookEvent = Assert.IsType<WebhookEvent>(createdResult.Value);
-            Assert.Equal(WebhookEventStatus.Processed, webhookEvent.Status);
-            Assert.Equal(WebhookEventSubStatus.Success, webhookEvent.SubStatus);
-            Assert.Contains("Test payload", webhookEvent.Payload);
+            var webhookEventDto = Assert.IsType<WebhookEventDto>(createdResult.Value);
+            // Database backend should keep status as New (awaiting consumer retrieval)
+            Assert.Equal(WebhookEventStatus.New, webhookEventDto.Status);
+            Assert.Equal(WebhookEventSubStatus.Pending, webhookEventDto.SubStatus);
+            // Verify event was created
+            Assert.NotEqual(Guid.Empty, webhookEventDto.Id);
         }
 
         [Fact]
