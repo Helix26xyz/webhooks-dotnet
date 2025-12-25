@@ -1,7 +1,6 @@
 $kafkaTopic = "k3"
-$kafkaServer = "10.10.100.93:9092"
+$kafkaServer = "localhost:9092"
 $API_HOST = "https://localhost:7579"
-$API_HOST = "http://10.11.213.29:8080"
 
 $webhook_definition = @{
     name = "k3"
@@ -11,10 +10,10 @@ $webhook_definition = @{
     project = "k3"
     status = 1
     backendType = 2
-    backendConfig = @{
+    backendConfig = (@{
         BootstrapServers = $kafkaServer
         Topic = $kafkaTopic
-    }
+    } | ConvertTo-Json)
     deliveryMode = 1
 } | ConvertTo-Json
 
@@ -26,7 +25,7 @@ function New-Webhook {
     )
 
     try {
-        $response = Invoke-RestMethod -Uri "$apiHost/api/Webhooks" -Method Post -Body $webhookDefinition -ContentType "application/json" -SkipCertificateCheck
+        $response = Invoke-RestMethod -Uri "$apiHost/api/Webhooks" -Method Post -Body $webhookDefinition -ContentType "application/json"
         Write-Host "Webhook created successfully!"
         Write-Host "Webhook ID: $($response.id)"
         return $response
@@ -46,7 +45,7 @@ function Invoke-Webhook{
     $body = $payload | ConvertTo-Json
 
     try {
-        $response = Invoke-RestMethod -Uri "$apiHost/api/wes/$($webhook_definition.owner)/$($webhook_definition.project)/$($webhook_definition.slug)/" -Method Post -Body $body -ContentType "application/json" -SkipCertificateCheck
+        $response = Invoke-RestMethod -Uri "$apiHost/api/wes/$($webhook_definition.owner)/$($webhook_definition.project)/$($webhook_definition.slug)/" -Method Post -Body $body -ContentType "application/json"
         Write-Host "✅ Webhook invoked successfully!"
         return $response
     } catch {
